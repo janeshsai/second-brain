@@ -75,6 +75,8 @@ grpcio==1.80.0
     #   grpcio-status
 grpcio-status==1.71.2
     # via google-api-core
+gunicorn==26.0.0
+    # via backend (pyproject.toml)
 h11==0.16.0
     # via httpcore
 httpcore==1.0.9
@@ -94,6 +96,8 @@ numpy==2.4.4
     # via
     #   backend (pyproject.toml)
     #   pgvector
+packaging==26.2
+    # via gunicorn
 pgvector==0.4.2
     # via backend (pyproject.toml)
 proto-plus==1.28.0
