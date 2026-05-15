@@ -129,7 +129,7 @@ STATIC_URL = '/static/'
 
 
 #cors allowd added here
-CORS_ALLOWED_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True
 ''' remove before line and enable this line later
 CORS_ALLOWED_ORIGINS=[
     "http://localhost:5173",
