@@ -124,13 +124,18 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
 
-STATIC_URL = 'static/'
 
 #cors allowd added here
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = True
+''' remove before line and enable this line later
+CORS_ALLOWED_ORIGINS=[
     "http://localhost:5173",
+    "https://second-brain-api-tg0j.onrender.com",
 ]
+'''
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
