@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-a2gq+$bq4dgcn2r)pvohc&we03)^(jf#8fkhv+^ce02u1!auw(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'second-brain-api-tg0j.onrender.com']
 
 
 # Application definition
