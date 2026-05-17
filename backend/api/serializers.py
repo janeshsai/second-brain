@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import (Note, Folder, Bookmark, BookmarkFolder, Category, Habit, HabitLog,  RoutineSubItem, RoutineSubItemLog, CalendarEvent, LearningPath, PathStep)
 import datetime
+from datetime import timedelta
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -104,6 +105,7 @@ class HabitSerializer(serializers.ModelSerializer):
     actual_today        = serializers.SerializerMethodField()
     completion_rate_today = serializers.SerializerMethodField()
     is_available_today  = serializers.SerializerMethodField()
+    recent_logs = serializers.SerializerMethodField()
 
     class Meta:
         model = Habit
@@ -112,9 +114,23 @@ class HabitSerializer(serializers.ModelSerializer):
             'weekdays', 'target_value', 'is_active', 'created_at',
             'streak', 'completed_today', 'total_completions',
             'sub_items', 'actual_today', 'completion_rate_today',
-            'is_available_today',
+            'is_available_today','order','recent_logs',
         ]
         read_only_fields = ['id', 'created_at']
+
+    def get_recent_logs(self, obj):
+        
+        today = datetime.date.today()
+        week_ago = today - timedelta(days=7)
+        logs = HabitLog.objects.filter(
+            habit=obj, 
+            date__gte=week_ago,
+            date__lte=today
+        ).order_by('date')
+        return [
+            {'date': str(l.date), 'completed': l.completed}
+            for l in logs
+        ]
 
     def get_is_available_today(self, obj):
         """For weekly habits: is today one of the selected weekdays?"""
@@ -144,7 +160,7 @@ class HabitSerializer(serializers.ModelSerializer):
 
     def get_total_completions(self, obj):
         return HabitLog.objects.filter(habit=obj, completed=True).count()
-
+    
     def get_streak(self, obj):
         return obj.streak_count
     

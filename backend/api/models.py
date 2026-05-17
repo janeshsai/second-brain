@@ -98,6 +98,7 @@ class Habit(models.Model):
     color = models.CharField(max_length=10, choices=COLOR_CHOICES, default='yellow')
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
     time_of_day = models.CharField(
         max_length=10, choices=TIME_OF_DAY_CHOICES, default='anytime'
     )

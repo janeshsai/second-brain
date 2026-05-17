@@ -226,7 +226,7 @@ class HabitListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return Habit.objects.filter(
             user=self.request.user, is_active=True
-        ).order_by('created_at')
+        ).order_by('order','created_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -404,6 +404,32 @@ def all_habits_history(request):
         'end_date': str(today),
         'habits': result,
     })
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def habit_reorder(request):
+    """
+    Reorder habits and optionally move between time sections.
+    Body: { 
+        orders: [
+            {id: 1, order: 0, time_of_day: 'morning'}, 
+            {id: 2, order: 1, time_of_day: 'evening'}, 
+            ...
+        ] 
+    }
+    """
+    orders = request.data.get('orders', [])
+    if not orders:
+        return Response({'error': 'No orders provided'}, status=400)
+    
+    for item in orders:
+        update_fields = {'order': item['order']}
+        if 'time_of_day' in item:
+            update_fields['time_of_day'] = item['time_of_day']
+        
+        Habit.objects.filter(id=item['id'], user=request.user).update(**update_fields)
+    
+    return Response({'success': True})
 
 # ── Sub-items CRUD ─────────────────────────────────────────────────────────────
 class SubItemListCreateView(generics.ListCreateAPIView):
