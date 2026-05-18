@@ -159,6 +159,12 @@ function SubItemRow({ item, color, onToggle, onDelete }) {
     isDragging,
   } = useSortable({
     id: `subitem-${item.id}`,
+    data: {
+      type: 'subitem',
+      subItemId: item.id,
+      routineId: item.routine,
+      order: item.order,
+    },
   });
 
   const accentColor = COLOR_MAP[color] || C.accent;
@@ -1138,7 +1144,14 @@ function SortableHabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuO
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: `habit-${habit.id}` });
+  } = useSortable({
+    id: `habit-${habit.id}`,
+    data: {
+      type: 'habit',
+      habitId: habit.id,
+      section: habit.time_of_day || 'anytime',
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -1351,7 +1364,14 @@ function SortableTableRow({ habit, pastTrackRange, dateColumns, historyById, onT
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: `habit-${habit.id}` });
+  } = useSortable({
+    id: `habit-${habit.id}`,
+    data: {
+      type: 'habit',
+      habitId: habit.id,
+      section: habit.time_of_day || 'anytime',
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -1790,10 +1810,126 @@ export default function Habits() {
     }
   }, [habits]);
 
+  //-- Helpers -----
+  const promoteSubItem = async (subItemId) => {
+    try {
+      await api.post(`/api/subitems/${subItemId}/promote/`);
+      fetchHabits();
+    } catch {
+      fetchHabits();
+    }
+  };
+
+  const moveSubItem = async ({
+    subItemId,
+    sourceHabitId,
+    targetHabitId,
+    overSubItemId = null,
+  }) => {
+    const sourceHabit = habits.find(h => h.id === sourceHabitId);
+    const targetHabit = habits.find(h => h.id === targetHabitId);
+    if (!sourceHabit || !targetHabit) return;
+
+    const sourceSubs = [...(sourceHabit.sub_items || [])];
+    const targetSubs =
+      sourceHabitId === targetHabitId
+        ? sourceSubs
+        : [...(targetHabit.sub_items || [])];
+
+    const moving = sourceSubs.find(si => si.id === subItemId);
+    if (!moving) return;
+
+    if (sourceHabitId === targetHabitId) {
+      const oldIndex = sourceSubs.findIndex(si => si.id === subItemId);
+      const newIndex = overSubItemId
+        ? sourceSubs.findIndex(si => si.id === overSubItemId)
+        : oldIndex;
+
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+
+      const reordered = arrayMove(sourceSubs, oldIndex, newIndex).map((si, idx) => ({
+        ...si,
+        order: idx,
+      }));
+
+      setHabits(prev =>
+        prev.map(h =>
+          h.id === sourceHabitId ? { ...h, sub_items: reordered } : h
+        )
+      );
+
+      try {
+        await Promise.all(
+          reordered.map((si, idx) =>
+            api.patch(`/api/subitems/${si.id}/`, {
+              order: idx,
+              routine: sourceHabitId,
+            })
+          )
+        );
+      } catch {
+        fetchHabits();
+      }
+
+      return;
+    }
+
+    const nextSource = sourceSubs
+      .filter(si => si.id !== subItemId)
+      .map((si, idx) => ({ ...si, order: idx }));
+
+    const nextTarget = [...targetSubs];
+    const insertIndex = overSubItemId
+      ? nextTarget.findIndex(si => si.id === overSubItemId)
+      : nextTarget.length;
+
+    nextTarget.splice(insertIndex < 0 ? nextTarget.length : insertIndex, 0, {
+      ...moving,
+      routine: targetHabitId,
+    });
+
+    const normalizedTarget = nextTarget.map((si, idx) => ({ ...si, order: idx }));
+
+    setHabits(prev =>
+      prev.map(h => {
+        if (h.id === sourceHabitId) return { ...h, sub_items: nextSource };
+        if (h.id === targetHabitId) return { ...h, sub_items: normalizedTarget };
+        return h;
+      })
+    );
+
+    try {
+      await Promise.all([
+        ...nextSource.map((si, idx) =>
+          api.patch(`/api/subitems/${si.id}/`, {
+            order: idx,
+            routine: sourceHabitId,
+          })
+        ),
+        ...normalizedTarget.map((si, idx) =>
+          api.patch(`/api/subitems/${si.id}/`, {
+            order: idx,
+            routine: targetHabitId,
+          })
+        ),
+      ]);
+    } catch {
+      fetchHabits();
+    }
+  };
+
   // ── CROSS-SECTION DRAG HANDLER ────────────────────────────────────────────
   const handleDragEnd = async (event) => {
     const { active, over } = event;
-    if (!over) return;
+    if (!over) {
+      const activeId = String(active.id);
+
+      if (activeId.startsWith('subitem-')) {
+        const subItemId = parseInt(activeId.replace('subitem-', ''), 10);
+        await promoteSubItem(subItemId);
+      }
+      return;
+    }
 
     const activeId = String(active.id);
     const overId = String(over.id);
@@ -1803,6 +1939,48 @@ export default function Habits() {
     let targetSection = null;
     let overHabitId = null;
     
+    // sub-item drag handling
+    if (activeId.startsWith('subitem-')) {
+      const subItemId = parseInt(activeId.replace('subitem-', ''), 10);
+      const activeData = active.data?.current || {};
+      const sourceHabitId = activeData.routineId;
+
+      if (!sourceHabitId) return;
+
+      if (overId.startsWith('section-')) {
+        await promoteSubItem(subItemId);
+        return;
+      }
+
+      if (overId.startsWith('habit-')) {
+        const targetHabitId = parseInt(overId.replace('habit-', ''), 10);
+        await moveSubItem({
+          subItemId,
+          sourceHabitId,
+          targetHabitId,
+        });
+        return;
+      }
+
+      if (overId.startsWith('subitem-')) {
+        const overData = over.data?.current || {};
+        const targetHabitId = overData.routineId;
+        const overSubItemId = parseInt(overId.replace('subitem-', ''), 10);
+
+        if (!targetHabitId) return;
+
+        await moveSubItem({
+          subItemId,
+          sourceHabitId,
+          targetHabitId,
+          overSubItemId,
+        });
+        return;
+      }
+
+      return;
+    }
+
     // Moving to another section
     if (overId.startsWith('section-')) {
       const draggedHabitId = parseInt(
