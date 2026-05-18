@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import api from '../api';
-import {DndContext,closestCenter,KeyboardSensor,PointerSensor,useSensor,useSensors,DragOverlay,} from '@dnd-kit/core';
+import {DndContext,closestCenter,KeyboardSensor,PointerSensor,useSensor,useSensors,DragOverlay,useDroppable,} from '@dnd-kit/core';
 import {arrayMove,SortableContext,sortableKeyboardCoordinates,useSortable,verticalListSortingStrategy,} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -46,7 +46,7 @@ function isAvailableToday(habit) {
 // ── Build date columns for past track with inactivity collapsing ──────────────
 function buildColumns(startDate, endDate, habitsData) {
   const activeDates = new Set();
-  habitsData.forEach(h => h.logs.forEach(l => { if (l.completed) activeDates.add(l.date); }));
+  habitsData.forEach(h => (h.logs || []).forEach(l => { if (l.completed) activeDates.add(l.date); }));
 
   const days = [];
   const cur = new Date(startDate + 'T00:00:00');
@@ -66,7 +66,15 @@ function buildColumns(startDate, endDate, habitsData) {
       inCount++;
     } else {
       if (inCount > 2) {
-        cols.push({ type: 'inactive', start: inStart, count: inCount });
+        const inactiveEnd = new Date(inStart + 'T00:00:00');
+        inactiveEnd.setDate(inactiveEnd.getDate() + inCount - 1);
+
+        cols.push({
+          type: 'inactive',
+          start: inStart,
+          end: inactiveEnd.toISOString().split('T')[0],
+          count: inCount
+        });
       } else {
         // 1-2 days: show individually
         for (let i = 0; i < inCount; i++) {
@@ -81,7 +89,15 @@ function buildColumns(startDate, endDate, habitsData) {
     }
   });
   if (inCount > 2) {
-    cols.push({ type: 'inactive', start: inStart, count: inCount });
+    const inactiveEnd = new Date(inStart + 'T00:00:00');
+    inactiveEnd.setDate(inactiveEnd.getDate() + inCount - 1);
+
+    cols.push({
+      type: 'inactive',
+      start: inStart,
+      end: inactiveEnd.toISOString().split('T')[0],
+      count: inCount
+    });
   } else {
     for (let i = 0; i < inCount; i++) {
       const d = new Date(inStart + 'T00:00:00');
@@ -125,31 +141,110 @@ function CompletionCircle({ rate, color, size = 36, onClick, disabled = false })
   );
 }
 
+// Generate date columns for past track display
+// ── Build date columns for past track with inactivity collapsing ──────────────
+//getTableDateColumns function deleted here
+
+
 // ── Sub-item row ──────────────────────────────────────────────────────────────
 function SubItemRow({ item, color, onToggle, onDelete }) {
   const [hov, setHov] = useState(false);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `subitem-${item.id}`,
+  });
+
+  const accentColor = COLOR_MAP[color] || C.accent;
+
+  const style = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '7px 12px 7px 44px',
+    borderTop: `1px solid ${C.sep}`,
+    background: hov ? 'rgba(0,0,0,0.15)' : 'transparent',
+    transition: 'background 0.1s',
+    transform: CSS.Transform.toString(transform),
+    transition: transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
   return (
-    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ display: 'flex', alignItems: 'center', gap: 10,
-        padding: '7px 12px 7px 44px', borderTop: `1px solid ${C.sep}`,
-        background: hov ? 'rgba(0,0,0,0.15)' : 'transparent', transition: 'background 0.1s' }}>
-      {/* Circle */}
-      <div onClick={() => onToggle(item.id)}
-        style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+    <div
+      ref={setNodeRef}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={style}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        style={{
+          cursor: 'grab',
+          padding: '0 4px',
+          color: C.t3,
+          fontSize: 14,
+          flexShrink: 0,
+          userSelect: 'none',
+          opacity: 0.8,
+        }}
+      >
+        ⋮⋮
+      </div>
+
+      <div
+        onClick={() => onToggle(item.id)}
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: '50%',
+          flexShrink: 0,
+          cursor: 'pointer',
           border: `2px solid ${item.completed_today ? C.success : 'rgba(255,255,255,0.2)'}`,
           background: item.completed_today ? C.success : 'transparent',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 10, color: '#000', transition: 'all 0.15s' }}>
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 10,
+          color: '#000',
+          transition: 'all 0.15s',
+        }}
+      >
         {item.completed_today ? '✓' : ''}
       </div>
-      <span style={{ flex: 1, fontSize: 13, color: item.completed_today ? C.t3 : C.t2,
-        textDecoration: item.completed_today ? 'line-through' : 'none' }}>
+
+      <span
+        style={{
+          flex: 1,
+          fontSize: 13,
+          color: item.completed_today ? C.t3 : C.t2,
+          textDecoration: item.completed_today ? 'line-through' : 'none',
+        }}
+      >
         {item.name}
       </span>
+
       {hov && (
-        <button onClick={() => onDelete(item.id)}
-          style={{ background: 'none', border: 'none', color: C.danger,
-            cursor: 'pointer', fontSize: 14, padding: '0 2px' }}>×</button>
+        <button
+          onClick={() => onDelete(item.id)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: C.danger,
+            cursor: 'pointer',
+            fontSize: 14,
+            padding: '0 2px',
+          }}
+        >
+          ×
+        </button>
       )}
     </div>
   );
@@ -184,10 +279,12 @@ function AddSubItemInput({ onAdd }) {
 
 // ── Past Track section (inline, not popup) ────────────────────────────────────
 function PastTrackSection({ habits }) {
-  const [range, setRange] = useState('3m');
+  
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [range, setRange] = useState('1w');
   const scrollRef = useRef(null);
+  //const scrollRef = useRef(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -341,7 +438,7 @@ function PastTrackSection({ habits }) {
 }
 
 // ── Global ⋮ options menu (beside + New Habit) ────────────────────────────────
-function GlobalOptionsMenu({ pos, viewMode, onView, showPastTrack, onTogglePastTrack, onClose }) {
+function GlobalOptionsMenu({ pos, viewMode, onView, pastTrackRange, onPastTrackChange, onClose }) {
   useEffect(() => {
     const h = () => onClose();
     document.addEventListener('click', h);
@@ -352,8 +449,9 @@ function GlobalOptionsMenu({ pos, viewMode, onView, showPastTrack, onTogglePastT
     <div onClick={e => e.stopPropagation()}
       style={{ position: 'fixed', top: pos.y, left: pos.x, zIndex: 400,
         background: '#3A3A3C', border: `1px solid ${C.sep}`, borderRadius: 10,
-        width: 176, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', overflow: 'hidden',
+        width: 200, boxShadow: '0 8px 32px rgba(0,0,0,0.6)', overflow: 'hidden',
         fontFamily: C.font }}>
+      
       {/* View options */}
       <div style={{ padding: '6px 14px 4px', fontSize: 10, color: C.t3,
         textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
@@ -363,18 +461,25 @@ function GlobalOptionsMenu({ pos, viewMode, onView, showPastTrack, onTogglePastT
         <MenuBtn key={v} label={label} color={viewMode === v ? C.accent : C.t1}
           onClick={() => { onView(v); onClose(); }} />
       ))}
+      
       <div style={{ borderTop: `1px solid ${C.sep}`, margin: '4px 0' }} />
-      <MenuBtn
-        label={showPastTrack ? '📊 Hide Past Track' : '📊 Past Track'}
-        color={showPastTrack ? C.accent : C.t1}
-        onClick={() => { onTogglePastTrack(); onClose(); }}
-      />
+      
+      {/* Past Track Range */}
+      <div style={{ padding: '6px 14px 4px', fontSize: 10, color: C.t3,
+        textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+        Past Track
+      </div>
+      {[['none','None'],['1w','1 Week'],['1m','1 Month'],['3m','3 Months'],['all','All Time']].map(([v, label]) => (
+        <MenuBtn key={v} label={pastTrackRange === v ? `✓ ${label}` : label} 
+          color={pastTrackRange === v ? C.accent : C.t1}
+          onClick={() => { onPastTrackChange(v); }} />
+      ))}
     </div>
   );
 }
 
 // ── Per-habit ⋮ menu ───────────────────────────────────────────────────────────
-function HabitMenu({ habit, pos, onEdit, onDelete, onNumeric, onCalendar, onClose }) {
+function HabitMenu({ habit, pos, onEdit, onDelete, onNumeric, onCalendar, onAddSubItem, onClose }) {
   useEffect(() => {
     const h = () => onClose();
     document.addEventListener('click', h);
@@ -387,6 +492,11 @@ function HabitMenu({ habit, pos, onEdit, onDelete, onNumeric, onCalendar, onClos
       ? [['🔢 Log Number', () => { onNumeric(habit); onClose(); }, C.t1]]
       : []
     ),
+    ['➕ Add Sub-item', () => {
+      const name = window.prompt('Name for new sub-item:');
+      if (name?.trim()) onAddSubItem(habit.id, name.trim());
+      onClose();
+    }, C.t1],
     ['📅 Add to Calendar', () => { onCalendar(habit); onClose(); }, C.t1],
     ['🗑 Delete', () => { onDelete(habit.id); onClose(); }, C.danger],
   ];
@@ -892,11 +1002,20 @@ function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onA
         {/* Sub-items */}
         {subOpen && (
           <div style={{ background: 'rgba(0,0,0,0.1)' }}>
-            {(habit.sub_items || []).map(si => (
-              <SubItemRow key={si.id} item={si} color={accentColor}
-                onToggle={onToggleSubItem}
-                onDelete={id => onDeleteSubItem(habit.id, id)} />
-            ))}
+            <SortableContext
+              items={(habit.sub_items || []).map(si => `subitem-${si.id}`)}
+              strategy={verticalListSortingStrategy}
+            >
+              {(habit.sub_items || []).map(si => (
+                <SubItemRow
+                  key={si.id}
+                  item={si}
+                  color={accentColor}
+                  onToggle={onToggleSubItem}
+                  onDelete={id => onDeleteSubItem(habit.id, id)}
+                />
+              ))}
+            </SortableContext>
             {addingSubItem ? (
               <AddSubItemInput onAdd={name => {
                 onAddSubItem(habit.id, name);
@@ -977,11 +1096,20 @@ function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onA
               No sub-items yet
             </div>
           )}
-          {(habit.sub_items || []).map(si => (
-            <SubItemRow key={si.id} item={si} color={accentColor}
-              onToggle={onToggleSubItem}
-              onDelete={id => onDeleteSubItem(habit.id, id)} />
-          ))}
+          <SortableContext
+            items={(habit.sub_items || []).map(si => `subitem-${si.id}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            {(habit.sub_items || []).map(si => (
+              <SubItemRow
+                key={si.id}
+                item={si}
+                color={accentColor}
+                onToggle={onToggleSubItem}
+                onDelete={id => onDeleteSubItem(habit.id, id)}
+              />
+            ))}
+          </SortableContext>
           {addingSubItem ? (
             <AddSubItemInput onAdd={name => {
               onAddSubItem(habit.id, name);
@@ -1017,12 +1145,14 @@ function SortableHabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuO
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : 1,
+    position: 'relative',
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
-      {/* Drag handle */}
+    <div ref={setNodeRef} style={style}>
+      {/* Drag handle - positioned absolute on left */}
       <div 
+        {...attributes} 
         {...listeners}
         style={{
           position: 'absolute',
@@ -1033,15 +1163,14 @@ function SortableHabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuO
           padding: '8px 4px',
           color: C.t3,
           fontSize: 14,
-          opacity: 0.6,
+          opacity: 0.5,
           zIndex: 2,
         }}
       >
         ⋮⋮
       </div>
       
-      {/* Your existing HabitCard, but with left padding for drag handle */}
-      <div style={{ paddingLeft: 24 }}>
+      <div style={{ paddingLeft: 28 }}>
         <HabitCard 
           habit={habit} 
           viewMode={viewMode}
@@ -1057,7 +1186,7 @@ function SortableHabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuO
 }
 
 // ── Table Cell: Completion Circle for Today ─────────────────────────────────
-function TodayCell({ habit }) {
+function TodayCell({ habit, onToggle }) {
   const accentColor = COLOR_MAP[habit.color] || C.accent;
   const rate = habit.completion_rate_today || 0;
   const isDone = rate >= 1.0;
@@ -1065,7 +1194,7 @@ function TodayCell({ habit }) {
 
   return (
     <div style={{ 
-      width: 40, 
+      width: 44, 
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',
@@ -1074,13 +1203,13 @@ function TodayCell({ habit }) {
       <div 
         onClick={(e) => {
           e.stopPropagation();
-          if (available) {
-            // Call parent's toggle - we'll pass this as prop
+          if (available && onToggle) {
+            onToggle(habit.id, true);
           }
         }}
         style={{
-          width: 28,
-          height: 28,
+          width: 32,
+          height: 32,
           borderRadius: '50%',
           border: `2px solid ${isDone ? accentColor : 'rgba(255,255,255,0.2)'}`,
           background: isDone ? accentColor : 'transparent',
@@ -1089,12 +1218,86 @@ function TodayCell({ habit }) {
           justifyContent: 'center',
           cursor: available ? 'pointer' : 'not-allowed',
           opacity: available ? 1 : 0.35,
-          fontSize: 12,
+          fontSize: 14,
           color: isDone ? '#000' : 'transparent',
           fontWeight: 700,
+          transition: 'all 0.15s',
         }}
       >
         {isDone ? '✓' : ''}
+      </div>
+    </div>
+  );
+}
+
+function DateCell({ log, color, col }) {
+  const accentColor = COLOR_MAP[color] || C.accent;
+  
+  // Inactive range cell
+  if (col?.type === 'inactive') {
+    return (
+      <div
+        style={{
+          width: 60,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          padding: '0 4px',
+        }}
+      >
+        <div style={{ fontSize: 8, color: C.t3, whiteSpace: 'nowrap' }}>
+          {new Date(col.start + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          {' — '}
+          {new Date(col.end + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </div>
+        <div style={{ display: 'flex', gap: 2, marginTop: 2 }}>
+          {[...Array(Math.min(col.count, 5))].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.05)',
+                border: `1px solid ${C.sep}`,
+              }}
+            />
+          ))}
+          {col.count > 5 && <span style={{ fontSize: 7, color: C.t3 }}>+{col.count - 5}</span>}
+        </div>
+      </div>
+    );
+  }
+  
+  // Regular day cell
+  const done = log?.completed || false;
+  return (
+    <div style={{ 
+      width: 36, 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}>
+      <div 
+        title={log?.date || col?.date || ''}
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: '50%',
+          border: `1.5px solid ${done ? accentColor : 'rgba(255,255,255,0.1)'}`,
+          background: done ? accentColor : 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 8,
+          color: done ? '#000' : 'transparent',
+          fontWeight: 700,
+        }}
+      >
+        {done ? '✓' : ''}
       </div>
     </div>
   );
@@ -1140,7 +1343,7 @@ function PastTrackCell({ logs, color }) {
 }
 
 // ── Sortable Table Row ─────────────────────────────────────────────────────
-function SortableTableRow({ habit, onToggle, onMenuOpen, onToggleSubItem, onDeleteSubItem, onAddSubItem }) {
+function SortableTableRow({ habit, pastTrackRange, dateColumns, historyById, onToggle, onMenuOpen, onToggleSubItem }) {
   const {
     attributes,
     listeners,
@@ -1154,15 +1357,22 @@ function SortableTableRow({ habit, onToggle, onMenuOpen, onToggleSubItem, onDele
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
-    background: isDragging ? 'rgba(255,214,10,0.1)' : 'transparent',
+    background: isDragging ? 'rgba(255,214,10,0.08)' : 'transparent',
     zIndex: isDragging ? 100 : 1,
   };
 
   const [subOpen, setSubOpen] = useState(false);
-  const [addingSubItem, setAddingSubItem] = useState(false);
   const hasSubItems = (habit.sub_items || []).length > 0;
   const accentColor = COLOR_MAP[habit.color] || C.accent;
   const available = isAvailableToday(habit);
+  const historyHabit = historyById?.get(habit.id);
+  const logs = historyHabit?.logs || habit.recent_logs || [];
+  
+  // Build a lookup of logs by date string
+  const logsByDate = {};
+  logs.forEach(l => {
+    logsByDate[l.date] = l;
+  });
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -1171,10 +1381,10 @@ function SortableTableRow({ habit, onToggle, onMenuOpen, onToggleSubItem, onDele
         style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: 8,
-          padding: '10px 12px',
+          gap: 0,
+          padding: '0',
           borderBottom: `1px solid ${C.sep}`,
-          minHeight: 44,
+          minHeight: 48,
         }}
       >
         {/* Drag Handle */}
@@ -1183,18 +1393,22 @@ function SortableTableRow({ habit, onToggle, onMenuOpen, onToggleSubItem, onDele
           {...listeners}
           style={{
             cursor: 'grab',
-            padding: '4px',
+            padding: '12px 8px',
             color: C.t3,
             fontSize: 14,
             flexShrink: 0,
-            opacity: 0.5,
+            opacity: 0.4,
+            width: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           ⋮⋮
         </div>
 
-        {/* Expand Arrow */}
-        {hasSubItems && (
+        {/* Expand Arrow (only if has sub-items) */}
+        {hasSubItems ? (
           <button 
             onClick={() => setSubOpen(s => !s)}
             style={{
@@ -1203,19 +1417,28 @@ function SortableTableRow({ habit, onToggle, onMenuOpen, onToggleSubItem, onDele
               color: C.t3,
               cursor: 'pointer',
               fontSize: 11,
-              padding: 2,
+              padding: '12px 4px',
               flexShrink: 0,
+              width: 24,
               transition: 'transform 0.2s',
               transform: subOpen ? 'rotate(90deg)' : 'none',
             }}
           >
             ▶
           </button>
+        ) : (
+          <div style={{ width: 24, flexShrink: 0 }} />
         )}
-        {!hasSubItems && <div style={{ width: 18, flexShrink: 0 }} />}
 
         {/* Task Name */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ 
+          flex: 1, 
+          minWidth: 0, 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 8,
+          padding: '0 8px',
+        }}>
           <div style={{ 
             width: 8, 
             height: 8, 
@@ -1235,19 +1458,23 @@ function SortableTableRow({ habit, onToggle, onMenuOpen, onToggleSubItem, onDele
             {habit.name}
           </span>
           {habit.streak > 0 && (
-            <span style={{ fontSize: 10, color: accentColor }}>🔥 {habit.streak}</span>
+            <span style={{ fontSize: 10, color: accentColor, flexShrink: 0 }}>🔥 {habit.streak}</span>
           )}
         </div>
 
-        {/* Past Track (last 7 days) */}
-        <div style={{ width: 120, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-          <PastTrackCell logs={habit.logs} color={habit.color} />
-        </div>
+        {/* Past Track Date Columns (dynamic) */}
+        {/* Past Track Date Columns (dynamic with collapsing) */}
+        {pastTrackRange !== 'none' && dateColumns.map((col, idx) => (
+          <DateCell 
+            key={col.type === 'inactive'? `inactive-${col.start}-${col.count}` : `${col.date}-${idx}`}
+            log={col.type === 'day' ? logsByDate[col.date] : null} 
+            color={habit.color}
+            col={col}
+          />
+        ))}
 
         {/* Today Completion */}
-        <div style={{ width: 80, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-          <TodayCell habit={habit} />
-        </div>
+        <TodayCell habit={habit} onToggle={onToggle} />
 
         {/* 3-dots menu */}
         <button 
@@ -1258,127 +1485,70 @@ function SortableTableRow({ habit, onToggle, onMenuOpen, onToggleSubItem, onDele
             cursor: 'pointer',
             color: C.t3,
             fontSize: 18,
-            padding: '0 4px',
+            padding: '12px 8px',
             flexShrink: 0,
+            width: 36,
           }}
         >
           ⋮
         </button>
       </div>
 
-      {/* Sub-items (expandable) */}
+      {/* Sub-items (expandable, indented) */}
       {subOpen && hasSubItems && (
-        <div style={{ background: 'rgba(0,0,0,0.2)' }}>
-          {(habit.sub_items || []).map(si => (
-            <div 
-              key={si.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 12px 8px 52px',
-                borderBottom: `1px solid ${C.sep}`,
-              }}
-            >
-              <div style={{ width: 28, flexShrink: 0 }} /> {/* spacer for drag handle */}
-              <div 
-                onClick={() => onToggleSubItem(si.id)}
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  border: `2px solid ${si.completed_today ? C.success : 'rgba(255,255,255,0.2)'}`,
-                  background: si.completed_today ? C.success : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 9,
-                  color: '#000',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                }}
-              >
-                {si.completed_today ? '✓' : ''}
-              </div>
-              <span style={{
-                fontSize: 12,
-                color: si.completed_today ? C.t3 : C.t2,
-                textDecoration: si.completed_today ? 'line-through' : 'none',
-                flex: 1,
-              }}>
-                {si.name}
-              </span>
-            </div>
-          ))}
-          
-          {/* Add sub-item inline */}
-          {addingSubItem ? (
-            <AddSubItemInput 
-              onAdd={(name) => {
-                onAddSubItem(habit.id, name);
-                setAddingSubItem(false);
-              }} 
-            />
-          ) : (
-            <button 
-              onClick={() => setAddingSubItem(true)}
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'left',
-                padding: '8px 12px 8px 52px',
-                background: 'none',
-                border: 'none',
-                borderTop: `1px solid ${C.sep}`,
-                color: C.t3,
-                fontSize: 12,
-                cursor: 'pointer',
-                fontFamily: C.font,
-              }}
-            >
-              + Add sub-item
-            </button>
-          )}
+        <div style={{ background: 'rgba(0,0,0,0.15)' }}>
+          <SortableContext
+            items={(habit.sub_items || []).map(si => `subitem-${si.id}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            {(habit.sub_items || []).map(si => (
+              <SubItemRow
+                key={si.id}
+                item={si}
+                color={habit.color}
+                onToggle={onToggleSubItem}
+                onDelete={() => {}}
+              />
+            ))}
+          </SortableContext>
         </div>
       )}
     </div>
   );
 }
 
+function DroppableSection({ sectionKey, children }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `section-${sectionKey}`,
+    data: { sectionKey },
+  });
+
+  return (
+    <div 
+      ref={setNodeRef}
+      style={{
+        background: isOver ? 'rgba(255,214,10,0.05)' : 'transparent',
+        borderRadius: 8,
+        transition: 'background 0.15s',
+        border: isOver ? `1px dashed ${C.accent}44` : '1px solid transparent',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 
 // ── Time section with collapse ────────────────────────────────────────────────
-function TimeSection({ section, habits, viewMode, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem, onReorder }) {
+function TimeSection({ section, habits, viewMode, pastTrackRange, dateColumns, historyById, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem, onReorder }) {
   const [open, setOpen] = useState(true);
   if (habits.length === 0) return null;
 
   const doneCount = habits.filter(h => h.completed_today).length;
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const activeId = parseInt(active.id.replace('habit-', ''));
-    const overId = parseInt(over.id.replace('habit-', ''));
-
-    const oldIndex = habits.findIndex(h => h.id === activeId);
-    const newIndex = habits.findIndex(h => h.id === overId);
-
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const newOrder = arrayMove(habits, oldIndex, newIndex);
-    onReorder(section.key, newOrder);
-  };
-
-  // Table Header
   const todayLabel = new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
   return (
-    <div style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 20 }}>
       {/* Section Header */}
       <button onClick={() => setOpen(s => !s)}
         style={{ 
@@ -1389,10 +1559,10 @@ function TimeSection({ section, habits, viewMode, onToggle, onToggleSubItem, onM
           background: 'none', 
           border: 'none', 
           cursor: 'pointer', 
-          padding: '6px 0',
-          marginBottom: open ? 0 : 0,
+          padding: '8px 0',
+          marginBottom: open ? 12 : 0,
         }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: C.t2, fontFamily: C.font }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.t2, fontFamily: C.font }}>
           {section.label}
         </span>
         <span style={{ fontSize: 11, color: C.t3 }}>{doneCount}/{habits.length}</span>
@@ -1409,68 +1579,116 @@ function TimeSection({ section, habits, viewMode, onToggle, onToggleSubItem, onM
       </button>
 
       {open && viewMode === 'table' && (
-        <div style={{ 
-          background: C.card, 
-          borderRadius: 12, 
-          border: `1px solid ${C.sep}`,
-          overflow: 'hidden',
-        }}>
-          {/* Table Header Row */}
+        <DroppableSection sectionKey={section.key}>
+          
           <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '8px 12px',
-            borderBottom: `1px solid ${C.sep}`,
-            background: 'rgba(255,255,255,0.03)',
+            background: C.card,
+            borderRadius: 12,
+            border: `1px solid ${C.sep}`,
+            overflow: 'hidden',
+            overflowX: 'auto',
           }}>
-            <div style={{ width: 30, flexShrink: 0 }} /> {/* drag handle spacer */}
-            <div style={{ width: 18, flexShrink: 0 }} /> {/* expand arrow spacer */}
-            <div style={{ flex: 1, fontSize: 11, color: C.t3, fontWeight: 700, textTransform: 'uppercase' }}>
-              Task
-            </div>
-            <div style={{ width: 120, flexShrink: 0, textAlign: 'center', fontSize: 11, color: C.t3, fontWeight: 700 }}>
-              Past 7 Days
-            </div>
-            <div style={{ width: 80, flexShrink: 0, textAlign: 'center', fontSize: 11, color: C.t3, fontWeight: 700 }}>
-              {todayLabel}
-            </div>
-            <div style={{ width: 40, flexShrink: 0 }} /> {/* menu spacer */}
-          </div>
+            {/* Scrollable wrapper */}
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <div style={{ minWidth: 'max-content' }}>
+                {/* Table Header Row */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '10px 0',
+                  borderBottom: `1px solid ${C.sep}`,
+                  background: 'rgba(255,255,255,0.03)',
+                }}>
+                  <div style={{ width: 32, flexShrink: 0 }} /> {/* drag handle spacer */}
+                  <div style={{ width: 24, flexShrink: 0 }} /> {/* expand arrow spacer */}
+                  <div style={{ flex: 1, fontSize: 11, color: C.t3, fontWeight: 700, textTransform: 'uppercase', padding: '0 8px' }}>
+                    Task
+                  </div>
+                  {/* Scrollable date columns container */}
+                  <div style={{ display: 'flex', flexShrink: 0, overflowX: 'auto' }}>
+                    {pastTrackRange !== 'none' && dateColumns.map((col, idx) => (
+                      <div
+                        key={col.type === 'inactive' ? `inactive-${col.start}-${col.end}` : `${col.date}-${idx}`}
+                        style={{
+                          width: col.type === 'inactive' ? 60 : 36,
+                          flexShrink: 0,
+                          textAlign: 'center',
+                          fontSize: 9,
+                          color: C.t3,
+                          fontWeight: 400,
+                        }}
+                      >
+                        {col.type === 'inactive' ? (
+                          <>
+                            <div style={{ fontSize: 8, lineHeight: 1.1 }}>
+                              {new Date(col.start + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                              {' — '}
+                              {new Date(col.end + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </div>
+                            <div style={{ fontSize: 7, opacity: 0.65 }}>{col.count}d</div>
+                          </>
+                        ) : (
+                          <>
+                            <div>{new Date(col.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' })}</div>
+                            <div style={{ fontSize: 8, opacity: 0.7 }}>
+                              {new Date(col.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div style={{ width: 44, flexShrink: 0, textAlign: 'center', fontSize: 11, color: C.t3, fontWeight: 700 }}>
+                    {pastTrackRange === 'none' ? 'Done' : todayLabel.split(' ')[0]}
+                  </div>
+                  <div style={{ width: 36, flexShrink: 0 }} /> {/* menu spacer */}
+                </div>
 
-          {/* Sortable Rows */}
-          <DndContext 
-            sensors={sensors} 
-            collisionDetection={closestCenter} 
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext 
-              items={habits.map(h => `habit-${h.id}`)} 
-              strategy={verticalListSortingStrategy}
-            >
-              {habits.map(h => (
-                <SortableTableRow 
-                  key={h.id} 
-                  habit={h}
-                  onToggle={onToggle}
-                  onMenuOpen={onMenuOpen}
-                  onToggleSubItem={onToggleSubItem}
-                  onDeleteSubItem={onDeleteSubItem}
-                  onAddSubItem={onAddSubItem}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
-        </div>
+                {/* Sortable Rows — NO DndContext here, it's in parent */}
+                <SortableContext 
+                  items={habits.map(h => `habit-${h.id}`)} 
+                  strategy={verticalListSortingStrategy}
+                >
+                  {habits.map(h => (
+                    <SortableTableRow 
+                      key={h.id} 
+                      habit={h}
+                      pastTrackRange={pastTrackRange}
+                      dateColumns={dateColumns}
+                      historyById={historyById}
+                      onToggle={onToggle}
+                      onMenuOpen={onMenuOpen}
+                      onToggleSubItem={onToggleSubItem}
+                      scrollableDates={true}  // new prop
+                    />
+                  ))}
+                </SortableContext>
+              </div>
+            </div>
+          </div>
+          
+        </DroppableSection>
       )}
 
       {open && viewMode === 'card' && (
-        /* Keep existing card view as-is */
-        habits.map(h => (
-          <HabitCard key={h.id} habit={h} viewMode="card"
-            onToggle={onToggle} onToggleSubItem={onToggleSubItem}
-            onMenuOpen={onMenuOpen}
-            onAddSubItem={onAddSubItem} onDeleteSubItem={onDeleteSubItem} />
-        ))
+        <SortableContext 
+          items={habits.map(h => `habit-${h.id}`)} 
+          strategy={verticalListSortingStrategy}
+        >
+          {habits.map(h => (
+            <SortableHabitCard 
+              key={h.id} 
+              habit={h} 
+              viewMode="card"
+              onToggle={onToggle} 
+              onToggleSubItem={onToggleSubItem}
+              onMenuOpen={onMenuOpen}
+              onAddSubItem={onAddSubItem} 
+              onDeleteSubItem={onDeleteSubItem}
+            />
+          ))}
+        </SortableContext>
       )}
     </div>
   );
@@ -1488,8 +1706,46 @@ export default function Habits() {
   const [calendarHabit, setCalendarHabit] = useState(null);
   const [menu, setMenu]               = useState(null); // per-habit ⋮
   const [globalMenu, setGlobalMenu]   = useState(null); // header ⋮
-  const [showPastTrack, setShowPastTrack] = useState(false);
+  //const [showPastTrack, setShowPastTrack] = useState(false);
+  const [pastTrackRange, setPastTrackRange] = useState('none'); // 'none', '1w', '1m', '3m', 'all'
   const pendingRef = useRef(new Set()); // prevent double-click race
+
+  
+
+  // Generate date columns based on selected range
+  const [tableHistory, setTableHistory] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTableHistory = async () => {
+      if (viewMode !== 'table' || pastTrackRange === 'none') {
+        setTableHistory(null);
+        return;
+      }
+
+      try {
+        const r = await api.get(`/api/habits/history/all/?range=${pastTrackRange}`);
+        if (!cancelled) setTableHistory(r.data);
+      } catch {}
+    };
+
+    loadTableHistory();
+    return () => { cancelled = true; };
+  }, [viewMode, pastTrackRange]);
+
+  const dateColumns = useMemo(() => {
+    if (!tableHistory || pastTrackRange === 'none') return [];
+    return buildColumns(tableHistory.start_date, tableHistory.end_date, tableHistory.habits);
+  }, [tableHistory, pastTrackRange]);
+
+  const tableHistoryById = useMemo(
+    () => new Map((tableHistory?.habits || []).map(h => [h.habit_id, h])),
+    [tableHistory]
+  );
+
+  const sensors = useSensors(
+  useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   useEffect(() => { fetchHabits(); }, []);
 
@@ -1499,6 +1755,9 @@ export default function Habits() {
     catch {}
     setLoading(false);
   };
+
+  
+
 
   // ── OPTIMISTIC TOGGLE — 0ms perceived lag ───────────────────────────────────
   const handleToggle = useCallback(async (id, cascade = false) => {
@@ -1531,6 +1790,83 @@ export default function Habits() {
     }
   }, [habits]);
 
+  // ── CROSS-SECTION DRAG HANDLER ────────────────────────────────────────────
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    
+    // Check if dropped over a section container
+    const overData = over.data?.current;
+    let targetSection = null;
+    let overHabitId = null;
+    
+    // Moving to another section
+    if (overId.startsWith('section-')) {
+      const draggedHabitId = parseInt(
+        activeId.replace('habit-', '')
+      );
+
+      const targetSection = overId.replace(
+        'section-',
+        ''
+      );
+
+      // local UI update
+      setHabits(prev =>
+        prev.map(h =>
+          h.id === draggedHabitId
+            ? { ...h, time_of_day: targetSection }
+            : h
+        )
+      );
+
+      // backend save
+      try {
+        await api.patch(`/api/habits/${draggedHabitId}/`, {
+          time_of_day: targetSection,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+
+      return;
+    } else if (over.id && over.id.startsWith('habit-')) {
+      overHabitId = parseInt(over.id.replace('habit-', ''));
+      // Find which section this habit belongs to
+      const overHabit = habits.find(h => h.id === overHabitId);
+      if (overHabit) targetSection = overHabit.time_of_day || 'anytime';
+    }
+
+    if (!targetSection) return;
+
+    const activeHabit = habits.find(h => h.id === activeId);
+    if (!activeHabit) return;
+
+    const sourceSection = activeHabit.time_of_day || 'anytime';
+    
+    // Get habits in target section, sorted by order
+    const sectionHabits = habits
+      .filter(h => (h.time_of_day || 'anytime') === targetSection)
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    // If same section, reorder
+    if (sourceSection === targetSection && overHabitId) {
+      const oldIndex = sectionHabits.findIndex(h => h.id === activeId);
+      const newIndex = sectionHabits.findIndex(h => h.id === overHabitId);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+      
+      const newOrder = arrayMove(sectionHabits, oldIndex, newIndex);
+      handleReorder(targetSection, newOrder);
+    } 
+    // If different section, move to end of target section
+    else if (sourceSection !== targetSection) {
+      const newOrder = [...sectionHabits, activeHabit];
+      handleReorder(targetSection, newOrder);
+    }
+  };
 
   //reorder handler
   const handleReorder = async (sectionKey, newOrder) => {
@@ -1776,22 +2112,33 @@ export default function Habits() {
             </div>
           ) : (
             <div style={{ maxWidth: 720 }}>
+              <DndContext 
+                sensors={sensors} 
+                collisionDetection={closestCenter} 
+                onDragEnd={handleDragEnd}
+              >
               {TIME_SECTIONS.map(section => (
-                <TimeSection key={section.key}
+                <TimeSection
+                  key={section.key}
                   section={section}
                   habits={grouped[section.key] || []}
                   viewMode={viewMode}
+                  pastTrackRange={pastTrackRange}
+                  dateColumns={dateColumns}
+                  historyById={tableHistoryById}
                   onToggle={handleToggle}
                   onToggleSubItem={handleToggleSubItem}
                   onMenuOpen={handleMenuOpen}
                   onAddSubItem={handleAddSubItem}
                   onDeleteSubItem={handleDeleteSubItem}
-                  onReorder={handleReorder} //for reorder
+                  onReorder={handleReorder}
                 />
               ))}
-
-              {/* Inline Past Track section */}
-              {showPastTrack && <PastTrackSection habits={habits} />}
+              </DndContext>
+              {viewMode === 'card' && pastTrackRange !== 'none' && (
+                <PastTrackSection habits={habits} />
+              )}
+              
             </div>
           )}
         </div>
@@ -1803,8 +2150,8 @@ export default function Habits() {
           pos={globalMenu.pos}
           viewMode={viewMode}
           onView={setViewMode}
-          showPastTrack={showPastTrack}
-          onTogglePastTrack={() => setShowPastTrack(s => !s)}
+          pastTrackRange={pastTrackRange}     
+          onPastTrackChange={setPastTrackRange}
           onClose={() => setGlobalMenu(null)}
         />
       )}
@@ -1817,6 +2164,7 @@ export default function Habits() {
           onDelete={handleDelete}
           onNumeric={h => setNumericHabit(h)}
           onCalendar={h => setCalendarHabit(h)}
+          onAddSubItem={handleAddSubItem}
           onClose={() => setMenu(null)}
         />
       )}

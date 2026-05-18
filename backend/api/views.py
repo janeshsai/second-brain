@@ -471,6 +471,32 @@ def subitem_toggle(request, pk):
 
     return Response(RoutineSubItemSerializer(sub_item, context={'request': request}).data)
 
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def promote_subitem(request, pk):
+    """Convert a sub-item into a standalone habit."""
+    try:
+        sub = RoutineSubItem.objects.get(pk=pk, routine__user=request.user)
+    except RoutineSubItem.DoesNotExist:
+        return Response({'error': 'Not found'}, status=404)
+    
+    # Create new habit with same properties as parent
+    habit = Habit.objects.create(
+        user=request.user,
+        name=sub.name,
+        frequency=sub.routine.frequency,
+        color=sub.routine.color,
+        time_of_day=sub.routine.time_of_day,
+        target_value=sub.routine.target_value,
+        weekdays=sub.routine.weekdays,
+        order=Habit.objects.filter(user=request.user).count(),
+    )
+    
+    # Delete the sub-item
+    sub.delete()
+    
+    return Response(HabitSerializer(habit, context={'request': request}).data)
+
 
 # ── Calendar Events CRUD ───────────────────────────────────────────────────────
 class CalendarEventListCreateView(generics.ListCreateAPIView):

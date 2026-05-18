@@ -32,7 +32,7 @@ from api.views import (
     PathStepListCreateView, PathStepDetailView,path_bulk_steps, import_apple_notes, import_google_keep,
     ai_search, ai_learning_coach, ai_extract_course, habit_cascade_complete, habit_log_numeric,add_subitem, all_habits_history,
     semantic_search, summarize_note, ai_chat, agent_command,
-    ai_generate_schedule, ai_confirm_schedule,stuck_steps,habit_reorder,
+    ai_generate_schedule, ai_confirm_schedule,stuck_steps,habit_reorder,promote_subitem,
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -92,4 +92,5 @@ urlpatterns = [
     path('api/ai/schedule/confirm/', ai_confirm_schedule),
     path('api/steps/stuck/', stuck_steps),
     path('api/habits/reorder/', habit_reorder),
+    path('api/subitems/<int:pk>/promote/', promote_subitem),
 ]
