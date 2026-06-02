@@ -1,0 +1,2624 @@
+#http://127.0.0.1:8000/api/schema/ go to this page for new version
+
+openapi: 3.0.3
+info:
+  title: Second Brain API
+  version: 1.0.0
+  description: API documentation for Second Brain project
+paths:
+  /api/ai/agent/:
+    post:
+      operationId: ai_agent_create
+      tags:
+      - ai
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ai/chat/:
+    post:
+      operationId: ai_chat_create
+      tags:
+      - ai
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ai/coach/:
+    post:
+      operationId: ai_coach_create
+      tags:
+      - ai
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ai/extract-course/:
+    post:
+      operationId: ai_extract_course_create
+      tags:
+      - ai
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ai/schedule/:
+    post:
+      operationId: ai_schedule_create
+      description: |-
+        Step 1: Generate a study schedule from selected learning paths.
+        Does NOT create calendar events yet — returns a plan for user approval.
+
+        Body: {
+          path_ids: [1, 2],
+          start_date: "2026-05-07",
+          hours_per_day: 1.5,
+          skip_days: [5, 6],        # 0=Mon, 6=Sun — days to avoid
+          preferred_time: "09:00",  # preferred session start time
+        }
+      tags:
+      - ai
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ai/schedule/confirm/:
+    post:
+      operationId: ai_schedule_confirm_create
+      description: |-
+        Step 2: User approved the plan — create CalendarEvent records.
+
+        Body: {
+          sessions: [
+            {
+              title: "GCP Course — Chapter 1: Intro",
+              date: "2026-05-07",
+              start_time: "09:00",
+              end_time: "10:30",
+              path_id: 1,
+              step_title: "Chapter 1: Intro",
+              color: "purple"
+            }, ...
+          ]
+        }
+      tags:
+      - ai
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/ai/search/:
+    get:
+      operationId: ai_search_retrieve
+      tags:
+      - ai
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/bookmark-folders/:
+    get:
+      operationId: bookmark_folders_list
+      tags:
+      - bookmark-folders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookmarkFolder'
+          description: ''
+    post:
+      operationId: bookmark_folders_create
+      tags:
+      - bookmark-folders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookmarkFolder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BookmarkFolder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BookmarkFolder'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookmarkFolder'
+          description: ''
+  /api/bookmark-folders/{id}/:
+    get:
+      operationId: bookmark_folders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmark-folders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookmarkFolder'
+          description: ''
+    put:
+      operationId: bookmark_folders_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmark-folders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookmarkFolder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BookmarkFolder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BookmarkFolder'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookmarkFolder'
+          description: ''
+    patch:
+      operationId: bookmark_folders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmark-folders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBookmarkFolder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBookmarkFolder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBookmarkFolder'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookmarkFolder'
+          description: ''
+    delete:
+      operationId: bookmark_folders_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmark-folders
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/bookmarks/:
+    get:
+      operationId: bookmarks_list
+      tags:
+      - bookmarks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bookmark'
+          description: ''
+    post:
+      operationId: bookmarks_create
+      tags:
+      - bookmarks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bookmark'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Bookmark'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Bookmark'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+          description: ''
+  /api/bookmarks/{id}/:
+    get:
+      operationId: bookmarks_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmarks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+          description: ''
+    put:
+      operationId: bookmarks_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmarks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bookmark'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Bookmark'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Bookmark'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+          description: ''
+    patch:
+      operationId: bookmarks_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmarks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBookmark'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBookmark'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBookmark'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+          description: ''
+    delete:
+      operationId: bookmarks_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmarks
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/bookmarks/{id}/opened/:
+    post:
+      operationId: bookmarks_opened_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - bookmarks
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/calendar/day/:
+    get:
+      operationId: calendar_day_retrieve
+      description: |-
+        Returns everything for a single date:
+        - All routines (habits) with their sub-items and today's completion
+        - All calendar events on that date
+        Groups them into morning / afternoon / evening / allday buckets.
+      tags:
+      - calendar
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/categories/:
+    get:
+      operationId: categories_list
+      tags:
+      - categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+    post:
+      operationId: categories_create
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/categories/{id}/:
+    get:
+      operationId: categories_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: categories_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: categories_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    delete:
+      operationId: categories_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - categories
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/events/:
+    get:
+      operationId: events_list
+      tags:
+      - events
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+    post:
+      operationId: events_create
+      tags:
+      - events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarEvent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarEvent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarEvent'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+  /api/events/{id}/:
+    get:
+      operationId: events_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - events
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+    put:
+      operationId: events_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalendarEvent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CalendarEvent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CalendarEvent'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+    patch:
+      operationId: events_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarEvent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarEvent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCalendarEvent'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarEvent'
+          description: ''
+    delete:
+      operationId: events_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - events
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/folders/:
+    get:
+      operationId: folders_list
+      tags:
+      - folders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Folder'
+          description: ''
+    post:
+      operationId: folders_create
+      tags:
+      - folders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Folder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Folder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Folder'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+          description: ''
+  /api/folders/{id}/:
+    get:
+      operationId: folders_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - folders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+          description: ''
+    put:
+      operationId: folders_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - folders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Folder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Folder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Folder'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+          description: ''
+    patch:
+      operationId: folders_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - folders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFolder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFolder'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFolder'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+          description: ''
+    delete:
+      operationId: folders_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - folders
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/habits/:
+    get:
+      operationId: habits_list
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Habit'
+          description: ''
+    post:
+      operationId: habits_create
+      tags:
+      - habits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Habit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Habit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Habit'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+  /api/habits/{id}/:
+    get:
+      operationId: habits_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+    put:
+      operationId: habits_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Habit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Habit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Habit'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+    patch:
+      operationId: habits_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHabit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHabit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHabit'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+    delete:
+      operationId: habits_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/habits/{id}/add-subitem/:
+    post:
+      operationId: habits_add_subitem_create
+      description: Add a sub-item to a habit. Returns updated habit with all sub-items.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/habits/{id}/cascade/:
+    post:
+      operationId: habits_cascade_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/habits/{id}/numeric/:
+    post:
+      operationId: habits_numeric_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/habits/{id}/toggle/:
+    post:
+      operationId: habits_toggle_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/habits/history/all/:
+    get:
+      operationId: habits_history_all_retrieve
+      description: |-
+        Returns logs for ALL active habits in a date range.
+        ?range=1w | 1m | 3m | all
+        Also returns the first-ever log date so frontend knows where to start.
+        Inactivity collapsing is handled on the frontend.
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/habits/reorder/:
+    post:
+      operationId: habits_reorder_create
+      description: |-
+        Reorder habits and optionally move between time sections.
+        Body: {
+            orders: [
+                {id: 1, order: 0, time_of_day: 'morning'},
+                {id: 2, order: 1, time_of_day: 'evening'},
+                ...
+            ]
+        }
+      tags:
+      - habits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      tags:
+      - health
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/import/apple/:
+    post:
+      operationId: import_apple_create
+      description: Accepts a .zip file containing Apple Notes exported as Markdown
+        (.md) or Text (.txt).
+      tags:
+      - import
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/import/google-keep/:
+    post:
+      operationId: import_google_keep_create
+      description: |-
+        Accepts Google Takeout ZIP for Keep notes.
+        Google Keep exports as JSON files inside a Takeout/Keep/ folder.
+        Each .json file is one note.
+      tags:
+      - import
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/login/:
+    post:
+      operationId: login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/notes/:
+    get:
+      operationId: notes_list
+      tags:
+      - notes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Note'
+          description: ''
+    post:
+      operationId: notes_create
+      tags:
+      - notes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Note'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Note'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Note'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+          description: ''
+  /api/notes/{id}/:
+    get:
+      operationId: notes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - notes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+          description: ''
+    put:
+      operationId: notes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - notes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Note'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Note'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Note'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+          description: ''
+    patch:
+      operationId: notes_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - notes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNote'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNote'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNote'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+          description: ''
+    delete:
+      operationId: notes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - notes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/notes/{id}/summarize/:
+    post:
+      operationId: notes_summarize_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - notes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/paths/:
+    get:
+      operationId: paths_list
+      tags:
+      - paths
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LearningPath'
+          description: ''
+    post:
+      operationId: paths_create
+      tags:
+      - paths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LearningPath'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LearningPath'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LearningPath'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningPath'
+          description: ''
+  /api/paths/{id}/:
+    get:
+      operationId: paths_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - paths
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningPath'
+          description: ''
+    put:
+      operationId: paths_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - paths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LearningPath'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LearningPath'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LearningPath'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningPath'
+          description: ''
+    patch:
+      operationId: paths_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - paths
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLearningPath'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLearningPath'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLearningPath'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningPath'
+          description: ''
+    delete:
+      operationId: paths_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - paths
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/paths/{id}/bulk-steps/:
+    post:
+      operationId: paths_bulk_steps_create
+      description: |-
+        Accepts a list of step titles and creates them all at once.
+        Body: { "steps": ["Chapter 1: Intro", "Chapter 2: Networking", ...] }
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - paths
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/register/:
+    post:
+      operationId: register_create
+      tags:
+      - register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/search/:
+    get:
+      operationId: search_retrieve
+      description: Takes a query, embeds it, and finds the most mathematically similar
+        notes.
+      tags:
+      - search
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/steps/:
+    get:
+      operationId: steps_list
+      tags:
+      - steps
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PathStep'
+          description: ''
+    post:
+      operationId: steps_create
+      tags:
+      - steps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathStep'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PathStep'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PathStep'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathStep'
+          description: ''
+  /api/steps/{id}/:
+    get:
+      operationId: steps_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - steps
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathStep'
+          description: ''
+    put:
+      operationId: steps_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - steps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathStep'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PathStep'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PathStep'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathStep'
+          description: ''
+    patch:
+      operationId: steps_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - steps
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPathStep'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPathStep'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPathStep'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathStep'
+          description: ''
+    delete:
+      operationId: steps_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - steps
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/steps/stuck/:
+    get:
+      operationId: steps_stuck_retrieve
+      description: Returns steps that have been 'in_progress' for 7+ days.
+      tags:
+      - steps
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/subitems/:
+    get:
+      operationId: subitems_list
+      tags:
+      - subitems
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoutineSubItem'
+          description: ''
+    post:
+      operationId: subitems_create
+      tags:
+      - subitems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineSubItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoutineSubItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoutineSubItem'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineSubItem'
+          description: ''
+  /api/subitems/{id}/:
+    get:
+      operationId: subitems_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - subitems
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineSubItem'
+          description: ''
+    put:
+      operationId: subitems_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - subitems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoutineSubItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoutineSubItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoutineSubItem'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineSubItem'
+          description: ''
+    patch:
+      operationId: subitems_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - subitems
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoutineSubItem'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedRoutineSubItem'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedRoutineSubItem'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutineSubItem'
+          description: ''
+    delete:
+      operationId: subitems_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - subitems
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/subitems/{id}/promote/:
+    post:
+      operationId: subitems_promote_create
+      description: Convert a sub-item into a standalone habit.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - subitems
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/subitems/{id}/toggle/:
+    post:
+      operationId: subitems_toggle_create
+      description: Toggle a single sub-item complete/incomplete for today.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - subitems
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+components:
+  schemas:
+    Bookmark:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        url:
+          type: string
+          format: uri
+          maxLength: 2000
+        title:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        progress:
+          type: string
+          maxLength: 255
+        category:
+          type: integer
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+          nullable: true
+        folder:
+          type: integer
+          nullable: true
+        is_favorite:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_opened:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - category_name
+      - created_at
+      - id
+      - updated_at
+    BookmarkFolder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        bookmark_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - bookmark_count
+      - created_at
+      - id
+      - name
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        notes:
+          type: string
+        color:
+          type: string
+          maxLength: 10
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        time_of_day:
+          $ref: '#/components/schemas/CalendarEventTimeOfDayEnum'
+        is_all_day:
+          type: boolean
+        recurrence:
+          $ref: '#/components/schemas/RecurrenceEnum'
+        recurrence_end:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        linked_step:
+          type: integer
+          nullable: true
+        linked_step_status:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - date
+      - id
+      - linked_step_status
+      - title
+    CalendarEventTimeOfDayEnum:
+      enum:
+      - morning
+      - afternoon
+      - evening
+      - allday
+      type: string
+      description: |-
+        * `morning` - Morning
+        * `afternoon` - Afternoon
+        * `evening` - Evening
+        * `allday` - All Day
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+      required:
+      - id
+      - name
+    ColorEnum:
+      enum:
+      - yellow
+      - blue
+      - green
+      - red
+      - purple
+      - orange
+      type: string
+      description: |-
+        * `yellow` - #FFD60A
+        * `blue` - #0A84FF
+        * `green` - #32D74B
+        * `red` - #FF453A
+        * `purple` - #BF5AF2
+        * `orange` - #FF9F0A
+    EventTypeEnum:
+      enum:
+      - meeting
+      - reminder
+      - learning_session
+      - task
+      - exercise
+      - other
+      type: string
+      description: |-
+        * `meeting` - Meeting
+        * `reminder` - Reminder
+        * `learning_session` - Learning Session
+        * `task` - Task
+        * `exercise` - Exercise
+        * `other` - Other
+    Folder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        note_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - note_count
+    FrequencyEnum:
+      enum:
+      - daily
+      - weekly
+      type: string
+      description: |-
+        * `daily` - Daily
+        * `weekly` - Weekly
+    Habit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        color:
+          $ref: '#/components/schemas/ColorEnum'
+        time_of_day:
+          $ref: '#/components/schemas/HabitTimeOfDayEnum'
+        weekdays:
+          type: string
+          maxLength: 20
+        target_value:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        streak:
+          type: string
+          readOnly: true
+        completed_today:
+          type: string
+          readOnly: true
+        total_completions:
+          type: string
+          readOnly: true
+        sub_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineSubItem'
+          readOnly: true
+        actual_today:
+          type: string
+          readOnly: true
+        completion_rate_today:
+          type: string
+          readOnly: true
+        is_available_today:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        recent_logs:
+          type: string
+          readOnly: true
+      required:
+      - actual_today
+      - completed_today
+      - completion_rate_today
+      - created_at
+      - id
+      - is_available_today
+      - name
+      - recent_logs
+      - streak
+      - sub_items
+      - total_completions
+    HabitTimeOfDayEnum:
+      enum:
+      - anytime
+      - morning
+      - afternoon
+      - evening
+      - night
+      type: string
+      description: |-
+        * `anytime` - Anytime
+        * `morning` - Morning
+        * `afternoon` - Afternoon
+        * `evening` - Evening
+        * `night` - Night
+    LearningPath:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        color:
+          type: string
+          maxLength: 10
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PathStep'
+          readOnly: true
+        total_steps:
+          type: integer
+          readOnly: true
+        done_steps:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - done_steps
+      - id
+      - name
+      - steps
+      - total_steps
+      - updated_at
+    Note:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        body:
+          type: string
+        tags:
+          type: string
+          maxLength: 500
+        folder:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - updated_at
+    PatchedBookmark:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        url:
+          type: string
+          format: uri
+          maxLength: 2000
+        title:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        progress:
+          type: string
+          maxLength: 255
+        category:
+          type: integer
+          nullable: true
+        category_name:
+          type: string
+          readOnly: true
+          nullable: true
+        folder:
+          type: integer
+          nullable: true
+        is_favorite:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_opened:
+          type: string
+          format: date-time
+          nullable: true
+    PatchedBookmarkFolder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        bookmark_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedCalendarEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        event_type:
+          $ref: '#/components/schemas/EventTypeEnum'
+        notes:
+          type: string
+        color:
+          type: string
+          maxLength: 10
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        time_of_day:
+          $ref: '#/components/schemas/CalendarEventTimeOfDayEnum'
+        is_all_day:
+          type: boolean
+        recurrence:
+          $ref: '#/components/schemas/RecurrenceEnum'
+        recurrence_end:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        linked_step:
+          type: integer
+          nullable: true
+        linked_step_status:
+          type: string
+          readOnly: true
+    PatchedCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+    PatchedFolder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        note_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedHabit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        color:
+          $ref: '#/components/schemas/ColorEnum'
+        time_of_day:
+          $ref: '#/components/schemas/HabitTimeOfDayEnum'
+        weekdays:
+          type: string
+          maxLength: 20
+        target_value:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        streak:
+          type: string
+          readOnly: true
+        completed_today:
+          type: string
+          readOnly: true
+        total_completions:
+          type: string
+          readOnly: true
+        sub_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoutineSubItem'
+          readOnly: true
+        actual_today:
+          type: string
+          readOnly: true
+        completion_rate_today:
+          type: string
+          readOnly: true
+        is_available_today:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        recent_logs:
+          type: string
+          readOnly: true
+    PatchedLearningPath:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        color:
+          type: string
+          maxLength: 10
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PathStep'
+          readOnly: true
+        total_steps:
+          type: integer
+          readOnly: true
+        done_steps:
+          type: string
+          readOnly: true
+    PatchedNote:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        body:
+          type: string
+        tags:
+          type: string
+          maxLength: 500
+        folder:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedPathStep:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        path:
+          type: integer
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        resource_url:
+          type: string
+          format: uri
+          maxLength: 2000
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        estimated_hours:
+          type: number
+          format: double
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedRoutineSubItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        routine:
+          type: integer
+        name:
+          type: string
+          maxLength: 255
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        completed_today:
+          type: string
+          readOnly: true
+        log_id:
+          type: string
+          readOnly: true
+    PathStep:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        path:
+          type: integer
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        resource_url:
+          type: string
+          format: uri
+          maxLength: 2000
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        estimated_hours:
+          type: number
+          format: double
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - path
+      - title
+      - updated_at
+    RecurrenceEnum:
+      enum:
+      - none
+      - daily
+      - weekly
+      - monthly
+      type: string
+      description: |-
+        * `none` - None
+        * `daily` - Daily
+        * `weekly` - Weekly
+        * `monthly` - Monthly
+    RoutineSubItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        routine:
+          type: integer
+        name:
+          type: string
+          maxLength: 255
+        order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        completed_today:
+          type: string
+          readOnly: true
+        log_id:
+          type: string
+          readOnly: true
+      required:
+      - completed_today
+      - id
+      - log_id
+      - name
+      - routine
+    StatusEnum:
+      enum:
+      - todo
+      - in_progress
+      - done
+      type: string
+      description: |-
+        * `todo` - To Do
+        * `in_progress` - In Progress
+        * `done` - Done
+    TokenObtainPair:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - password
+      - refresh
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+      required:
+      - id
+      - password
+      - username
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

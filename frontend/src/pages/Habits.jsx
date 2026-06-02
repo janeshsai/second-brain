@@ -30,7 +30,7 @@ const TIME_SECTIONS = [
 // 0=Mon … 6=Sun (Python datetime.weekday() convention stored in backend)
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_SHORT  = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
+const TASK_COL_W = 260;
 // JS getDay(): 0=Sun → convert to 0=Mon
 function todayIndex() {
   const js = new Date().getDay(); // 0=Sun
@@ -147,7 +147,7 @@ function CompletionCircle({ rate, color, size = 36, onClick, disabled = false })
 
 
 // ── Sub-item row ──────────────────────────────────────────────────────────────
-function SubItemRow({ item, color, onToggle, onDelete }) {
+function SubItemRow({ item, color, onToggle, onDelete, onMenuOpen }) {
   const [hov, setHov] = useState(false);
 
   const {
@@ -176,9 +176,8 @@ function SubItemRow({ item, color, onToggle, onDelete }) {
     padding: '7px 12px 7px 44px',
     borderTop: `1px solid ${C.sep}`,
     background: hov ? 'rgba(0,0,0,0.15)' : 'transparent',
-    transition: 'background 0.1s',
     transform: CSS.Transform.toString(transform),
-    transition: transition,
+    transition,
     opacity: isDragging ? 0.6 : 1,
   };
 
@@ -239,17 +238,17 @@ function SubItemRow({ item, color, onToggle, onDelete }) {
 
       {hov && (
         <button
-          onClick={() => onDelete(item.id)}
+          onClick={(e) => onMenuOpen(e, item)}
           style={{
             background: 'none',
             border: 'none',
-            color: C.danger,
+            color: C.t3,
             cursor: 'pointer',
             fontSize: 14,
             padding: '0 2px',
           }}
         >
-          ×
+          ⋮
         </button>
       )}
     </div>
@@ -479,6 +478,42 @@ function GlobalOptionsMenu({ pos, viewMode, onView, pastTrackRange, onPastTrackC
         <MenuBtn key={v} label={pastTrackRange === v ? `✓ ${label}` : label} 
           color={pastTrackRange === v ? C.accent : C.t1}
           onClick={() => { onPastTrackChange(v); }} />
+      ))}
+    </div>
+  );
+}
+
+function SubItemMenu({ subItem, pos, onPromote, onDelete, onClose }) {
+  useEffect(() => {
+    const h = () => onClose();
+    document.addEventListener('click', h);
+    return () => document.removeEventListener('click', h);
+  }, []);
+
+  const items = [
+    ['⬆ Promote to Habit', () => { onPromote(subItem.id); onClose(); }, C.t1],
+    ['🗑 Delete', () => { onDelete(subItem.id); onClose(); }, C.danger],
+  ];
+
+  return (
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        position: 'fixed',
+        top: pos.y,
+        left: pos.x,
+        zIndex: 400,
+        background: '#3A3A3C',
+        border: `1px solid ${C.sep}`,
+        borderRadius: 10,
+        width: 188,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+        overflow: 'hidden',
+        fontFamily: C.font,
+      }}
+    >
+      {items.map(([label, action, color]) => (
+        <MenuBtn key={label} label={label} color={color} onClick={action} />
       ))}
     </div>
   );
@@ -942,7 +977,7 @@ function WeekdayBar({ weekdays: wdStr }) {
 }
 
 // ── Habit Card (card view) ────────────────────────────────────────────────────
-function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem }) {
+function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem,onSubItemMenuOpen, }) {
   const [subOpen, setSubOpen] = useState(false);
   const [addingSubItem, setAddingSubItem] = useState(false);
   const accentColor = COLOR_MAP[habit.color] || C.accent;
@@ -1019,6 +1054,7 @@ function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onA
                   color={accentColor}
                   onToggle={onToggleSubItem}
                   onDelete={id => onDeleteSubItem(habit.id, id)}
+                  onMenuOpen={onSubItemMenuOpen}
                 />
               ))}
             </SortableContext>
@@ -1113,6 +1149,7 @@ function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onA
                 color={accentColor}
                 onToggle={onToggleSubItem}
                 onDelete={id => onDeleteSubItem(habit.id, id)}
+                onMenuOpen={onSubItemMenuOpen}
               />
             ))}
           </SortableContext>
@@ -1136,7 +1173,7 @@ function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onA
   );
 }
 
-function SortableHabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem }) {
+function SortableHabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem,onSubItemMenuOpen, }) {
   const {
     attributes,
     listeners,
@@ -1192,6 +1229,7 @@ function SortableHabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuO
           onMenuOpen={onMenuOpen}
           onAddSubItem={onAddSubItem}
           onDeleteSubItem={onDeleteSubItem}
+          onSubItemMenuOpen={onSubItemMenuOpen}
         />
       </div>
     </div>
@@ -1356,7 +1394,7 @@ function PastTrackCell({ logs, color }) {
 }
 
 // ── Sortable Table Row ─────────────────────────────────────────────────────
-function SortableTableRow({ habit, pastTrackRange, dateColumns, historyById, onToggle, onMenuOpen, onToggleSubItem }) {
+function SortableTableRow({ habit, pastTrackRange, dateColumns, historyById, onToggle, onMenuOpen, onToggleSubItem, onSubItemMenuOpen, }) {
   const {
     attributes,
     listeners,
@@ -1407,79 +1445,101 @@ function SortableTableRow({ habit, pastTrackRange, dateColumns, historyById, onT
           minHeight: 48,
         }}
       >
-        {/* Drag Handle */}
-        <div 
-          {...attributes} 
-          {...listeners}
+        <div
           style={{
-            cursor: 'grab',
-            padding: '12px 8px',
-            color: C.t3,
-            fontSize: 14,
+            position: 'sticky',
+            left: 0,
+            zIndex: 4,
+            width: TASK_COL_W,
             flexShrink: 0,
-            opacity: 0.4,
-            width: 32,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            background: C.card,
+            borderRight: `1px solid ${C.sep}`,
           }}
         >
-          ⋮⋮
-        </div>
-
-        {/* Expand Arrow (only if has sub-items) */}
-        {hasSubItems ? (
-          <button 
-            onClick={() => setSubOpen(s => !s)}
+          {/* Drag Handle */}
+          <div
+            {...attributes}
+            {...listeners}
             style={{
-              background: 'none',
-              border: 'none',
+              cursor: 'grab',
+              padding: '12px 8px',
               color: C.t3,
-              cursor: 'pointer',
-              fontSize: 11,
-              padding: '12px 4px',
+              fontSize: 14,
               flexShrink: 0,
-              width: 24,
-              transition: 'transform 0.2s',
-              transform: subOpen ? 'rotate(90deg)' : 'none',
+              opacity: 0.4,
+              width: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            ▶
-          </button>
-        ) : (
-          <div style={{ width: 24, flexShrink: 0 }} />
-        )}
-
-        {/* Task Name */}
-        <div style={{ 
-          flex: 1, 
-          minWidth: 0, 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 8,
-          padding: '0 8px',
-        }}>
-          <div style={{ 
-            width: 8, 
-            height: 8, 
-            borderRadius: '50%', 
-            background: accentColor,
-            flexShrink: 0,
-          }} />
-          <span style={{ 
-            fontSize: 13.5, 
-            fontWeight: 500,
-            color: habit.completed_today ? C.t3 : (available ? C.t1 : C.t3),
-            textDecoration: habit.completed_today ? 'line-through' : 'none',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-            {habit.name}
-          </span>
-          {habit.streak > 0 && (
-            <span style={{ fontSize: 10, color: accentColor, flexShrink: 0 }}>🔥 {habit.streak}</span>
+            ⋮⋮
+          </div>
+          
+          {/* Expand Arrow */}
+          {hasSubItems ? (
+            <button
+              onClick={() => setSubOpen(s => !s)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: C.t3,
+                cursor: 'pointer',
+                fontSize: 11,
+                padding: '12px 4px',
+                flexShrink: 0,
+                width: 24,
+                transition: 'transform 0.2s',
+                transform: subOpen ? 'rotate(90deg)' : 'none',
+              }}
+            >
+              ▶
+            </button>
+          ) : (
+            <div style={{ width: 24, flexShrink: 0 }} />
           )}
+
+          {/* Task Name */}
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '0 8px',
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: accentColor,
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontSize: 13.5,
+                fontWeight: 500,
+                color: habit.completed_today ? C.t3 : (available ? C.t1 : C.t3),
+                textDecoration: habit.completed_today ? 'line-through' : 'none',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {habit.name}
+            </span>
+            {habit.streak > 0 && (
+              <span style={{ fontSize: 10, color: accentColor, flexShrink: 0 }}>
+                🔥 {habit.streak}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Past Track Date Columns (dynamic) */}
@@ -1528,6 +1588,7 @@ function SortableTableRow({ habit, pastTrackRange, dateColumns, historyById, onT
                 color={habit.color}
                 onToggle={onToggleSubItem}
                 onDelete={() => {}}
+                onMenuOpen={onSubItemMenuOpen}
               />
             ))}
           </SortableContext>
@@ -1560,7 +1621,7 @@ function DroppableSection({ sectionKey, children }) {
 
 
 // ── Time section with collapse ────────────────────────────────────────────────
-function TimeSection({ section, habits, viewMode, pastTrackRange, dateColumns, historyById, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem, onReorder }) {
+function TimeSection({ section, habits, viewMode, pastTrackRange, dateColumns, historyById, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem, onReorder, onSubItemMenuOpen, }) {
   const [open, setOpen] = useState(true);
   if (habits.length === 0) return null;
 
@@ -1619,10 +1680,24 @@ function TimeSection({ section, habits, viewMode, pastTrackRange, dateColumns, h
                   borderBottom: `1px solid ${C.sep}`,
                   background: 'rgba(255,255,255,0.03)',
                 }}>
-                  <div style={{ width: 32, flexShrink: 0 }} /> {/* drag handle spacer */}
-                  <div style={{ width: 24, flexShrink: 0 }} /> {/* expand arrow spacer */}
-                  <div style={{ flex: 1, fontSize: 11, color: C.t3, fontWeight: 700, textTransform: 'uppercase', padding: '0 8px' }}>
-                    Task
+                  <div
+                    style={{
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 5,
+                      width: TASK_COL_W,
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      background: C.card,
+                      borderRight: `1px solid ${C.sep}`,
+                    }}
+                  >
+                    <div style={{ width: 32, flexShrink: 0 }} />
+                    <div style={{ width: 24, flexShrink: 0 }} />
+                    <div style={{ flex: 1, fontSize: 11, color: C.t3, fontWeight: 700, textTransform: 'uppercase', padding: '0 8px' }}>
+                      Task
+                    </div>
                   </div>
                   {/* Scrollable date columns container */}
                   <div style={{ display: 'flex', flexShrink: 0, overflowX: 'auto' }}>
@@ -1681,6 +1756,7 @@ function TimeSection({ section, habits, viewMode, pastTrackRange, dateColumns, h
                       onMenuOpen={onMenuOpen}
                       onToggleSubItem={onToggleSubItem}
                       scrollableDates={true}  // new prop
+                      onSubItemMenuOpen={onSubItemMenuOpen}
                     />
                   ))}
                 </SortableContext>
@@ -1706,6 +1782,7 @@ function TimeSection({ section, habits, viewMode, pastTrackRange, dateColumns, h
               onMenuOpen={onMenuOpen}
               onAddSubItem={onAddSubItem} 
               onDeleteSubItem={onDeleteSubItem}
+              onSubItemMenuOpen={onSubItemMenuOpen}
             />
           ))}
         </SortableContext>
@@ -1713,6 +1790,55 @@ function TimeSection({ section, habits, viewMode, pastTrackRange, dateColumns, h
     </div>
   );
 }
+
+function HabitDragPreview({ habit }) {
+  const accentColor = COLOR_MAP[habit.color] || C.accent;
+
+  return (
+    <div
+      style={{
+        width: 320,
+        padding: '12px 14px',
+        borderRadius: 14,
+        background: 'rgba(44,44,46,0.96)',
+        border: `1px solid ${accentColor}55`,
+        boxShadow: '0 18px 40px rgba(0,0,0,0.45)',
+        transform: 'scale(1.02)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: accentColor }} />
+        <div style={{ fontSize: 14, fontWeight: 600, color: C.t1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+          {habit.name}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SubItemDragPreview({ item }) {
+  return (
+    <div
+      style={{
+        minWidth: 240,
+        padding: '10px 12px',
+        borderRadius: 12,
+        background: 'rgba(44,44,46,0.96)',
+        border: `1px solid ${C.sep}`,
+        boxShadow: '0 18px 40px rgba(0,0,0,0.45)',
+        transform: 'scale(1.02)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ color: C.t3, fontSize: 14 }}>⋮⋮</div>
+        <div style={{ fontSize: 13, color: C.t1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+          {item.name}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 // ── Main Habits Page ──────────────────────────────────────────────────────────
 export default function Habits() {
@@ -1729,6 +1855,8 @@ export default function Habits() {
   //const [showPastTrack, setShowPastTrack] = useState(false);
   const [pastTrackRange, setPastTrackRange] = useState('none'); // 'none', '1w', '1m', '3m', 'all'
   const pendingRef = useRef(new Set()); // prevent double-click race
+  const [activeDrag, setActiveDrag] = useState(null);
+  const [subMenu, setSubMenu] = useState(null);
 
   
 
@@ -1811,6 +1939,15 @@ export default function Habits() {
   }, [habits]);
 
   //-- Helpers -----
+  const handleSubItemMenuOpen = (e, subItem) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSubMenu({
+      item: subItem,
+      pos: { x: Math.max(0, rect.left - 176), y: rect.bottom + 4 },
+    });
+  };
+
   const promoteSubItem = async (subItemId) => {
     try {
       await api.post(`/api/subitems/${subItemId}/promote/`);
@@ -1918,132 +2055,144 @@ export default function Habits() {
     }
   };
 
+  const handleDragStart = (event) => {
+    setActiveDrag(event.active.data?.current || null);
+  };
+
+  const handleDragCancel = () => {
+    setActiveDrag(null);
+  };
+
   // ── CROSS-SECTION DRAG HANDLER ────────────────────────────────────────────
   const handleDragEnd = async (event) => {
-    const { active, over } = event;
-    if (!over) {
-      const activeId = String(active.id);
+    try{
+      const { active, over } = event;
+      if (!over) {
+        const activeId = String(active.id);
 
+        if (activeId.startsWith('subitem-')) {
+          const subItemId = parseInt(activeId.replace('subitem-', ''), 10);
+          await promoteSubItem(subItemId);
+        }
+        return;
+      }
+
+      const activeId = String(active.id);
+      const overId = String(over.id);
+      
+      // Check if dropped over a section container
+      const overData = over.data?.current;
+      let targetSection = null;
+      let overHabitId = null;
+      
+      // sub-item drag handling
       if (activeId.startsWith('subitem-')) {
         const subItemId = parseInt(activeId.replace('subitem-', ''), 10);
-        await promoteSubItem(subItemId);
+        const activeData = active.data?.current || {};
+        const sourceHabitId = activeData.routineId;
+
+        if (!sourceHabitId) return;
+
+        if (overId.startsWith('section-')) {
+          await promoteSubItem(subItemId);
+          return;
+        }
+
+        if (overId.startsWith('habit-')) {
+          const targetHabitId = parseInt(overId.replace('habit-', ''), 10);
+          await moveSubItem({
+            subItemId,
+            sourceHabitId,
+            targetHabitId,
+          });
+          return;
+        }
+
+        if (overId.startsWith('subitem-')) {
+          const overData = over.data?.current || {};
+          const targetHabitId = overData.routineId;
+          const overSubItemId = parseInt(overId.replace('subitem-', ''), 10);
+
+          if (!targetHabitId) return;
+
+          await moveSubItem({
+            subItemId,
+            sourceHabitId,
+            targetHabitId,
+            overSubItemId,
+          });
+          return;
+        }
+
+        return;
       }
-      return;
-    }
 
-    const activeId = String(active.id);
-    const overId = String(over.id);
-    
-    // Check if dropped over a section container
-    const overData = over.data?.current;
-    let targetSection = null;
-    let overHabitId = null;
-    
-    // sub-item drag handling
-    if (activeId.startsWith('subitem-')) {
-      const subItemId = parseInt(activeId.replace('subitem-', ''), 10);
-      const activeData = active.data?.current || {};
-      const sourceHabitId = activeData.routineId;
-
-      if (!sourceHabitId) return;
-
+      // Moving to another section
       if (overId.startsWith('section-')) {
-        await promoteSubItem(subItemId);
+        const draggedHabitId = parseInt(
+          activeId.replace('habit-', '')
+        );
+
+        const targetSection = overId.replace(
+          'section-',
+          ''
+        );
+
+        // local UI update
+        setHabits(prev =>
+          prev.map(h =>
+            h.id === draggedHabitId
+              ? { ...h, time_of_day: targetSection }
+              : h
+          )
+        );
+
+        // backend save
+        try {
+          await api.patch(`/api/habits/${draggedHabitId}/`, {
+            time_of_day: targetSection,
+          });
+        } catch (err) {
+          console.error(err);
+        }
+
         return;
+      } else if (over.id && over.id.startsWith('habit-')) {
+        overHabitId = parseInt(over.id.replace('habit-', ''));
+        // Find which section this habit belongs to
+        const overHabit = habits.find(h => h.id === overHabitId);
+        if (overHabit) targetSection = overHabit.time_of_day || 'anytime';
       }
 
-      if (overId.startsWith('habit-')) {
-        const targetHabitId = parseInt(overId.replace('habit-', ''), 10);
-        await moveSubItem({
-          subItemId,
-          sourceHabitId,
-          targetHabitId,
-        });
-        return;
-      }
+      if (!targetSection) return;
 
-      if (overId.startsWith('subitem-')) {
-        const overData = over.data?.current || {};
-        const targetHabitId = overData.routineId;
-        const overSubItemId = parseInt(overId.replace('subitem-', ''), 10);
+      const activeHabit = habits.find(h => h.id === activeId);
+      if (!activeHabit) return;
 
-        if (!targetHabitId) return;
-
-        await moveSubItem({
-          subItemId,
-          sourceHabitId,
-          targetHabitId,
-          overSubItemId,
-        });
-        return;
-      }
-
-      return;
-    }
-
-    // Moving to another section
-    if (overId.startsWith('section-')) {
-      const draggedHabitId = parseInt(
-        activeId.replace('habit-', '')
-      );
-
-      const targetSection = overId.replace(
-        'section-',
-        ''
-      );
-
-      // local UI update
-      setHabits(prev =>
-        prev.map(h =>
-          h.id === draggedHabitId
-            ? { ...h, time_of_day: targetSection }
-            : h
-        )
-      );
-
-      // backend save
-      try {
-        await api.patch(`/api/habits/${draggedHabitId}/`, {
-          time_of_day: targetSection,
-        });
-      } catch (err) {
-        console.error(err);
-      }
-
-      return;
-    } else if (over.id && over.id.startsWith('habit-')) {
-      overHabitId = parseInt(over.id.replace('habit-', ''));
-      // Find which section this habit belongs to
-      const overHabit = habits.find(h => h.id === overHabitId);
-      if (overHabit) targetSection = overHabit.time_of_day || 'anytime';
-    }
-
-    if (!targetSection) return;
-
-    const activeHabit = habits.find(h => h.id === activeId);
-    if (!activeHabit) return;
-
-    const sourceSection = activeHabit.time_of_day || 'anytime';
-    
-    // Get habits in target section, sorted by order
-    const sectionHabits = habits
-      .filter(h => (h.time_of_day || 'anytime') === targetSection)
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
-
-    // If same section, reorder
-    if (sourceSection === targetSection && overHabitId) {
-      const oldIndex = sectionHabits.findIndex(h => h.id === activeId);
-      const newIndex = sectionHabits.findIndex(h => h.id === overHabitId);
-      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+      const sourceSection = activeHabit.time_of_day || 'anytime';
       
-      const newOrder = arrayMove(sectionHabits, oldIndex, newIndex);
-      handleReorder(targetSection, newOrder);
+      // Get habits in target section, sorted by order
+      const sectionHabits = habits
+        .filter(h => (h.time_of_day || 'anytime') === targetSection)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      // If same section, reorder
+      if (sourceSection === targetSection && overHabitId) {
+        const oldIndex = sectionHabits.findIndex(h => h.id === activeId);
+        const newIndex = sectionHabits.findIndex(h => h.id === overHabitId);
+        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+        
+        const newOrder = arrayMove(sectionHabits, oldIndex, newIndex);
+        handleReorder(targetSection, newOrder);
+      } 
+      // If different section, move to end of target section
+      else if (sourceSection !== targetSection) {
+        const newOrder = [...sectionHabits, activeHabit];
+        handleReorder(targetSection, newOrder);
+      }
+    } finally {
+        setActiveDrag(null);
     } 
-    // If different section, move to end of target section
-    else if (sourceSection !== targetSection) {
-      const newOrder = [...sectionHabits, activeHabit];
-      handleReorder(targetSection, newOrder);
-    }
   };
 
   //reorder handler
@@ -2293,6 +2442,8 @@ export default function Habits() {
               <DndContext 
                 sensors={sensors} 
                 collisionDetection={closestCenter} 
+                onDragStart={handleDragStart}
+                onDragCancel={handleDragCancel}
                 onDragEnd={handleDragEnd}
               >
               {TIME_SECTIONS.map(section => (
@@ -2310,8 +2461,21 @@ export default function Habits() {
                   onAddSubItem={handleAddSubItem}
                   onDeleteSubItem={handleDeleteSubItem}
                   onReorder={handleReorder}
+                  onSubItemMenuOpen={handleSubItemMenuOpen}
                 />
               ))}
+                <DragOverlay adjustScale={false}>
+                  {activeDrag?.type === 'habit' && (() => {
+                    const h = habits.find(x => x.id === activeDrag.habitId);
+                    return h ? <HabitDragPreview habit={h} /> : null;
+                  })()}
+                  {activeDrag?.type === 'subitem' && (() => {
+                    const item = habits
+                      .flatMap(h => h.sub_items || [])
+                      .find(si => si.id === activeDrag.subItemId);
+                    return item ? <SubItemDragPreview item={item} /> : null;
+                  })()}
+                </DragOverlay>
               </DndContext>
               {viewMode === 'card' && pastTrackRange !== 'none' && (
                 <PastTrackSection habits={habits} />
@@ -2344,6 +2508,16 @@ export default function Habits() {
           onCalendar={h => setCalendarHabit(h)}
           onAddSubItem={handleAddSubItem}
           onClose={() => setMenu(null)}
+        />
+      )}
+
+      {subMenu && (
+        <SubItemMenu
+          subItem={subMenu.item}
+          pos={subMenu.pos}
+          onPromote={promoteSubItem}
+          onDelete={handleDeleteSubItem}
+          onClose={() => setSubMenu(null)}
         />
       )}
 

@@ -25,6 +25,12 @@ from .ai_agent import generate_learning_strategy, extract_course_syllabus
 from .ai_utils import get_embedding, get_query_embedding, generate_summary, rag_chat, agent_parse_command
 from django.utils import timezone
 from datetime import timedelta
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    OpenApiExample,
+    OpenApiResponse,
+)
 
 
 

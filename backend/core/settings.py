@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'api',
+    'drf_spectacular',
+    'drf_spectacular_sidecar'
 ]
 
 MIDDLEWARE = [
@@ -140,7 +142,31 @@ CORS_ALLOWED_ORIGINS=[
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Second Brain API',
+    'DESCRIPTION': 'API documentation for Second Brain project',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+
+    'SECURITY': [
+        {
+            'BearerAuth': [],
+        }
+    ],
+
+    'COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
 }
 
 from datetime import timedelta
