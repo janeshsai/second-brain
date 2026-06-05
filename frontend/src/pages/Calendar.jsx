@@ -5,20 +5,17 @@ import { format, parse, startOfWeek, getDay, addDays, addWeeks,
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import api from '../api';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import Badge from '../components/ui/Badge';
+import C from '../theme';
 
 const localizer = dateFnsLocalizer({
   format, parse, startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 0 }),
   getDay, locales: { 'en-US': enUS },
 });
-
-const C = {
-  bg: '#1C1C1E', sidebar: '#2C2C2E', panel: '#2C2C2E',
-  sep: 'rgba(84,84,88,0.55)', hover: 'rgba(255,255,255,0.06)',
-  inputBg: 'rgba(255,255,255,0.08)', accent: '#FFD60A',
-  t1: '#FFFFFF', t2: 'rgba(235,235,245,0.6)', t3: 'rgba(235,235,245,0.28)',
-  danger: '#FF453A', success: '#32D74B',
-  font: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif",
-};
 
 const COLOR_MAP = { yellow: '#FFD60A', blue: '#0A84FF', green: '#32D74B', red: '#FF453A', purple: '#BF5AF2', orange: '#FF9F0A' };
 const TYPE_COLOR = { meeting: '#0A84FF', reminder: '#FF9F0A', learning_session: '#BF5AF2', task: '#32D74B', exercise: '#FF453A', other: '#636366' };
@@ -37,9 +34,9 @@ function YearView({ date, events, onSelectDay }) {
           const ed = new Date(e.start); return ed.getMonth() === monthStart.getMonth() && ed.getFullYear() === year;
         }).map(e => new Date(e.start).getDate()));
         return (
-          <div key={monthName} style={{ background: '#2C2C2E', borderRadius: 12, padding: 12, border: `1px solid ${C.sep}` }}>
-            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: C.t1 }}>{monthName}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
+          <Card key={monthName} style={{ background: '#2C2C2E', borderRadius: 16, padding: 14, border: `1px solid ${C.sep}`, minHeight: 220 }}>
+            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: C.t1 }}>{monthName}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
               {['S','M','T','W','T','F','S'].map((d, i) => (<div key={i} style={{ fontSize: 9, color: C.t3, textAlign: 'center', fontWeight: 700 }}>{d}</div>))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
@@ -49,15 +46,15 @@ function YearView({ date, events, onSelectDay }) {
                 const isToday = today.getDate() === dayNum && today.getMonth() === monthStart.getMonth() && today.getFullYear() === year;
                 const hasEvent = eventDays.has(dayNum);
                 return (
-                  <div key={dayNum} onClick={() => onSelectDay(new Date(year, monthStart.getMonth(), dayNum))}
-                    style={{ width: '100%', aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 4, cursor: 'pointer', position: 'relative', background: isToday ? C.accent : 'transparent', color: isToday ? '#000' : C.t2, fontSize: 10, fontWeight: isToday ? 700 : 400 }}>
+                  <button key={dayNum} type="button" onClick={() => onSelectDay(new Date(year, monthStart.getMonth(), dayNum))}
+                    style={{ width: '100%', aspectRatio: '1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderRadius: 8, cursor: 'pointer', position: 'relative', background: isToday ? C.accent : 'transparent', color: isToday ? '#000' : C.t2, fontSize: 10, fontWeight: isToday ? 700 : 400, border: 'none' }}>
                     {dayNum}
-                    {hasEvent && !isToday && <div style={{ width: 3, height: 3, borderRadius: '50%', background: C.accent, position: 'absolute', bottom: 1 }} />}
-                  </div>
+                    {hasEvent && !isToday && <div style={{ width: 4, height: 4, borderRadius: '50%', background: C.accent, position: 'absolute', bottom: 6 }} />}
+                  </button>
                 );
               })}
             </div>
-          </div>
+          </Card>
         );
       })}
     </div>
@@ -73,26 +70,28 @@ function MiniCalendar({ currentDate, onSelectDay }) {
   const today = new Date();
 
   return (
-    <div style={{ padding: '10px 12px', borderBottom: `1px solid ${C.sep}` }}>
+    <Card style={{ padding: '12px 14px', borderRadius: 16, margin: 12, border: `1px solid ${C.sep}` }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <button onClick={() => setMini(d => addMonths(d, -1))} style={{ background: 'none', border: 'none', color: C.t2, cursor: 'pointer', fontSize: 14 }}>‹</button>
+        <Button variant="ghost" size="sm" onClick={() => setMini(d => addMonths(d, -1))}>‹</Button>
         <span style={{ fontSize: 12, fontWeight: 700, color: C.t1 }}>{format(mini, 'MMM yyyy')}</span>
-        <button onClick={() => setMini(d => addMonths(d, 1))} style={{ background: 'none', border: 'none', color: C.t2, cursor: 'pointer', fontSize: 14 }}>›</button>
+        <Button variant="ghost" size="sm" onClick={() => setMini(d => addMonths(d, 1))}>›</Button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, marginBottom: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 6 }}>
         {['S','M','T','W','T','F','S'].map((d, i) => <div key={i} style={{ fontSize: 9, color: C.t3, textAlign: 'center', fontWeight: 700 }}>{d}</div>)}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
         {Array.from({ length: firstDay }, (_, i) => <div key={`e${i}`} />)}
         {Array.from({ length: daysInMonth }, (_, i) => {
           const day = i + 1; const d = new Date(year, month, day);
           const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
           return (
-            <div key={day} onClick={() => onSelectDay(d)} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, cursor: 'pointer', borderRadius: 4, background: isToday ? C.accent : 'transparent', color: isToday ? '#000' : C.t2, fontWeight: isToday ? 700 : 400 }}>{day}</div>
+            <button key={day} type="button" onClick={() => onSelectDay(d)} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, cursor: 'pointer', borderRadius: 6, background: isToday ? C.accent : 'transparent', color: isToday ? '#000' : C.t2, fontWeight: isToday ? 700 : 400, border: 'none' }}>
+              {day}
+            </button>
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -109,34 +108,33 @@ function PanelCard({ item, type, onToggleHabit, onToggleSubItem, onRemove }) {
   const isRoutine = type === 'routine';
   const accentColor = isRoutine ? (COLOR_MAP[item.color] || C.accent) : (TYPE_COLOR[item.event_type] || C.accent);
   const titleText = item.name || item.title;
-  // Visual Strikethrough if manual done
   const isDone = !isRoutine && titleText.includes('[DONE]');
 
   return (
-    <div style={{ background: '#3A3A3C', borderRadius: 12, marginBottom: 10, border: `1px solid ${C.sep}`, overflow: 'hidden' }}>
-      <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+    <Card style={{ background: '#2B2B2D', marginBottom: 12, borderRadius: 16, overflow: 'hidden', border: `1px solid ${C.sep}` }}>
+      <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 10, height: 10, borderRadius: '50%', background: accentColor, flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 13.5, color: isDone ? C.t3 : C.t1, textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {titleText}
           </div>
           <div style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
-            {isRoutine ? `${(item.sub_items || []).filter(s => s.completed_today).length}/${(item.sub_items || []).length} done` : `${(item.event_type || '').replace('_', ' ')} ${item.start_time ? '• ' + item.start_time.slice(0,5) : ''}`}
+            {isRoutine ? `${(item.sub_items || []).filter(s => s.completed_today).length}/${(item.sub_items || []).length} done` : `${(item.event_type || '').replace('_', ' ')}${item.start_time ? ' • ' + item.start_time.slice(0,5) : ''}`}
           </div>
         </div>
-        <button onClick={onRemove} style={{ background: 'none', border: 'none', color: C.t3, cursor: 'pointer', fontSize: 16 }}>×</button>
+        <Button variant="ghost" size="sm" onClick={onRemove} style={{ color: C.t3, minWidth: 28, padding: 0 }}>×</Button>
       </div>
       {isRoutine && (
-        <div style={{ padding: '0 14px 12px' }}>
-          <div onClick={() => onToggleHabit(item.id)} style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 8, marginBottom: 4, borderBottom: `1px solid ${C.sep}`, cursor: 'pointer' }}>
+        <div style={{ padding: '0 16px 12px' }}>
+          <button onClick={() => onToggleHabit(item.id)} type="button" style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, marginBottom: 8, borderBottom: `1px solid ${C.sep}`, cursor: 'pointer', background: 'transparent', border: 'none', width: '100%', color: item.completed_today ? C.t3 : C.t1, fontFamily: C.font }}>
             <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, border: `2px solid ${item.completed_today ? accentColor : 'rgba(255,255,255,0.25)'}`, background: item.completed_today ? accentColor : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#000' }}>{item.completed_today ? '✓' : ''}</div>
-            <span style={{ fontSize: 13, color: item.completed_today ? C.t3 : C.t1, textDecoration: item.completed_today ? 'line-through' : 'none', flex: 1 }}>Mark whole routine done</span>
-          </div>
+            <span style={{ fontSize: 13, textDecoration: item.completed_today ? 'line-through' : 'none', flex: 1 }}>Mark whole routine done</span>
+          </button>
           {(item.sub_items || []).length > 0 ? (item.sub_items || []).map(si => <SubItemRow key={si.id} item={si} onToggle={onToggleSubItem} />) : <p style={{ fontSize: 12, color: C.t3, padding: '6px 0' }}>No sub-items yet.</p>}
         </div>
       )}
-      {!isRoutine && item.notes && <div style={{ padding: '0 14px 12px', fontSize: 13, color: C.t2, lineHeight: 1.6 }}>{item.notes}</div>}
-    </div>
+      {!isRoutine && item.notes && <div style={{ padding: '0 16px 12px', fontSize: 13, color: C.t2, lineHeight: 1.6 }}>{item.notes}</div>}
+    </Card>
   );
 }
 
@@ -147,36 +145,37 @@ function EventPopup({ event, habits, rawEvents, onClose }) {
   const color = isRoutine ? (COLOR_MAP[data.color] || C.accent) : (TYPE_COLOR[data.event_type] || C.accent);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 14, padding: 20, width: 300, boxShadow: '0 16px 48px rgba(0,0,0,0.6)', fontFamily: C.font }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+    <Modal onClose={onClose}>
+      <Card style={{ width: '100%', maxWidth: 360, borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <div style={{ width: 12, height: 12, borderRadius: '50%', background: color }} />
           <span style={{ fontWeight: 700, fontSize: 15, color: C.t1, flex: 1 }}>{data.name || data.title}</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.t3, cursor: 'pointer', fontSize: 18 }}>×</button>
+          <Button variant="ghost" size="sm" onClick={onClose} style={{ padding: 0, minWidth: 28 }}>×</Button>
         </div>
-        {isRoutine && (
-          <>
-            <div style={{ fontSize: 12, color: C.t3, marginBottom: 8 }}>{data.frequency} • 🔥 {data.streak} day streak • {data.total_completions} total</div>
-            {(data.sub_items || []).length > 0 && (
-              <div style={{ borderTop: `1px solid ${C.sep}`, paddingTop: 10 }}>
-                {data.sub_items.map(si => (
-                  <div key={si.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', fontSize: 12, color: si.completed_today ? C.t3 : C.t1 }}>
-                    <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${si.completed_today ? C.success : 'rgba(255,255,255,0.2)'}`, background: si.completed_today ? C.success : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9 }}>{si.completed_today ? '✓' : ''}</div>
-                    <span style={{ textDecoration: si.completed_today ? 'line-through' : 'none' }}>{si.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-        {!isRoutine && (
-          <>
-            <div style={{ fontSize: 12, color: C.t3, marginBottom: 8 }}>{(data.event_type || '').replace('_', ' ')}{data.start_time && ` • ${data.start_time.slice(0,5)}`}{data.end_time && ` → ${data.end_time.slice(0,5)}`}</div>
-            {data.notes && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.6 }}>{data.notes}</div>}
-          </>
-        )}
-      </div>
-    </div>
+        <div style={{ padding: '0 20px 20px' }}>
+          {isRoutine ? (
+            <>
+              <div style={{ fontSize: 12, color: C.t3, marginBottom: 8 }}>{data.frequency} • 🔥 {data.streak} day streak • {data.total_completions} total</div>
+              {(data.sub_items || []).length > 0 && (
+                <div style={{ borderTop: `1px solid ${C.sep}`, paddingTop: 10 }}>
+                  {data.sub_items.map(si => (
+                    <div key={si.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', fontSize: 12, color: si.completed_today ? C.t3 : C.t1 }}>
+                      <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${si.completed_today ? C.success : 'rgba(255,255,255,0.2)'}`, background: si.completed_today ? C.success : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9 }}>{si.completed_today ? '✓' : ''}</div>
+                      <span style={{ textDecoration: si.completed_today ? 'line-through' : 'none' }}>{si.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 12, color: C.t3, marginBottom: 8 }}>{(data.event_type || '').replace('_', ' ')}{data.start_time && ` • ${data.start_time.slice(0,5)}`}{data.end_time && ` → ${data.end_time.slice(0,5)}`}</div>
+              {data.notes && <div style={{ fontSize: 13, color: C.t2, lineHeight: 1.6 }}>{data.notes}</div>}
+            </>
+          )}
+        </div>
+      </Card>
+    </Modal>
   );
 }
 
@@ -190,44 +189,70 @@ function EventModal({ defaultDate, defaultTime, onSave, onClose }) {
   const [color, setColor] = useState('blue');
   const [notes, setNotes] = useState('');
 
-  const inp = { width: '100%', background: C.inputBg, border: `1px solid ${C.sep}`, borderRadius: 8, padding: '9px 12px', color: C.t1, fontSize: 13, outline: 'none', fontFamily: C.font, boxSizing: 'border-box' };
-  const lbl = { display: 'block', fontSize: 11, color: C.t3, marginBottom: 5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' };
+  const labelStyle = { display: 'block', fontSize: 11, color: C.t3, marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16, width: '100%', maxWidth: 480, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+    <Modal onClose={onClose}>
+      <Card style={{ width: '100%', maxWidth: 520, borderRadius: 18, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <span style={{ fontWeight: 700, fontSize: 16, color: C.t1 }}>New Event</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.t2, fontSize: 22, cursor: 'pointer' }}>×</button>
+          <Button variant="ghost" size="sm" onClick={onClose} style={{ padding: 0, minWidth: 28 }}>×</Button>
         </div>
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '65vh', overflowY: 'auto' }}>
-          <div><label style={lbl}>Title</label><input style={inp} placeholder="What's happening?" value={title} onChange={e => setTitle(e.target.value)} autoFocus /></div>
-          <div><label style={lbl}>Type</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div>
+            <div style={labelStyle}>Title</div>
+            <Input placeholder="What's happening?" value={title} onChange={e => setTitle(e.target.value)} autoFocus />
+          </div>
+          <div>
+            <div style={labelStyle}>Type</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {[['task','Task'],['meeting','Meeting'],['reminder','Reminder'],['learning_session','Learning'],['exercise','Exercise'],['other','Other']].map(([val, label]) => (
-                <button key={val} onClick={() => setEventType(val)} style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: 'none', fontFamily: C.font, background: eventType === val ? (TYPE_COLOR[val] + '33') : C.inputBg, color: eventType === val ? TYPE_COLOR[val] : C.t2, fontWeight: eventType === val ? 700 : 400 }}>{label}</button>
+                <Button key={val} variant={eventType === val ? 'primary' : 'secondary'} size="sm" onClick={() => setEventType(val)} style={{ minWidth: 92 }}>{label}</Button>
               ))}
             </div>
           </div>
-          <div><label style={lbl}>Date</label><input type="date" style={inp} value={date} onChange={e => setDate(e.target.value)} /></div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}><label style={lbl}>Start</label><input type="time" style={inp} value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
-            <div style={{ flex: 1 }}><label style={lbl}>End</label><input type="time" style={inp} value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
+          <div>
+            <div style={labelStyle}>Date</div>
+            <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
-          <div><label style={lbl}>Recurrence</label><select style={inp} value={recurrence} onChange={e => setRecurrence(e.target.value)}><option value="none">One time</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
-          <div><label style={lbl}>Color</label>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {Object.entries(COLOR_MAP).map(([n, hex]) => (<button key={n} onClick={() => setColor(n)} style={{ width: 26, height: 26, borderRadius: '50%', background: hex, cursor: 'pointer', border: color === n ? '3px solid white' : '3px solid transparent' }} />))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <div style={labelStyle}>Start</div>
+              <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} />
+            </div>
+            <div>
+              <div style={labelStyle}>End</div>
+              <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} />
             </div>
           </div>
-          <div><label style={lbl}>Notes</label><textarea style={{ ...inp, resize: 'none' }} rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
+          <div>
+            <div style={labelStyle}>Recurrence</div>
+            <select style={{ width: '100%', borderRadius: 12, border: `1px solid ${C.sep}`, background: C.inputBg, color: C.t1, padding: '12px 14px', fontFamily: C.font, fontSize: 13 }} value={recurrence} onChange={e => setRecurrence(e.target.value)}>
+              <option value="none">One time</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <div>
+            <div style={labelStyle}>Color</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {Object.entries(COLOR_MAP).map(([n, hex]) => (
+                <button key={n} type="button" onClick={() => setColor(n)} style={{ width: 28, height: 28, borderRadius: '50%', background: hex, cursor: 'pointer', border: color === n ? '3px solid #fff' : '3px solid transparent' }} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <div style={labelStyle}>Notes</div>
+            <textarea style={{ width: '100%', borderRadius: 12, border: `1px solid ${C.sep}`, background: C.inputBg, color: C.t1, fontFamily: C.font, fontSize: 13, padding: '12px 14px', minHeight: 96, resize: 'vertical' }} rows={3} value={notes} onChange={e => setNotes(e.target.value)} />
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose} style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`, color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={() => title.trim() && onSave({ title, event_type: eventType, date, start_time: startTime || null, end_time: endTime || null, time_of_day: 'allday', is_all_day: false, recurrence, color, notes })} style={{ flex: 1, background: C.accent, color: '#000', border: 'none', padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: C.font }}>Save Event</button>
+        <div style={{ display: 'flex', gap: 10, padding: '16px 20px', borderTop: `1px solid ${C.sep}` }}>
+          <Button variant="secondary" style={{ flex: 1 }} onClick={onClose}>Cancel</Button>
+          <Button style={{ flex: 1 }} onClick={() => title.trim() && onSave({ title, event_type: eventType, date, start_time: startTime || null, end_time: endTime || null, time_of_day: 'allday', is_all_day: false, recurrence, color, notes })}>Save Event</Button>
         </div>
-      </div>
-    </div>
+      </Card>
+    </Modal>
   );
 }
 
@@ -372,32 +397,26 @@ export default function CalendarPage() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', borderBottom: `1px solid ${C.sep}`, flexShrink: 0, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', background: C.inputBg, borderRadius: 10, padding: 3, gap: 2 }}>
+          <div style={{ display: 'flex', background: C.inputBg, borderRadius: 10, padding: 4, gap: 4 }}>
             {[['day','Day'],['week','Week'],['month','Month'],['year','Year']].map(([val, label]) => (
-              <button key={val} onClick={() => setView(val)}
-                style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer', border: 'none',
-                  fontFamily: C.font, background: view === val ? C.accent : 'transparent',
-                  color: view === val ? '#000' : C.t2, fontWeight: view === val ? 700 : 400 }}>
+              <Button key={val} variant={view === val ? 'primary' : 'secondary'} size="sm" onClick={() => setView(val)} style={{ minWidth: 64, padding: '8px 12px' }}>
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
 
-          <button onClick={() => navigate('prev')} style={{ background: C.inputBg, border: 'none', color: C.t1, borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16 }}>‹</button>
+          <Button variant="secondary" size="sm" onClick={() => navigate('prev')} style={{ width: 34, height: 34, padding: 0 }}>‹</Button>
           <span style={{ fontWeight: 700, fontSize: 14, minWidth: 180, textAlign: 'center', color: C.t1 }}>{headerLabel()}</span>
-          <button onClick={() => navigate('next')} style={{ background: C.inputBg, border: 'none', color: C.t1, borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16 }}>›</button>
-          <button onClick={() => setCurrentDate(new Date())} style={{ background: C.inputBg, border: `1px solid ${C.sep}`, color: C.t1, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontFamily: C.font }}>Today</button>
+          <Button variant="secondary" size="sm" onClick={() => navigate('next')} style={{ width: 34, height: 34, padding: 0 }}>›</Button>
+          <Button variant="secondary" size="sm" onClick={() => setCurrentDate(new Date())}>Today</Button>
 
           <div style={{ flex: 1 }} />
 
-          <button onClick={() => { setPanelOpen(s => !s); if (panelOpen) setPanelItems([]); }}
-            style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: C.font,
-              border: `1px solid ${panelOpen ? C.accent : C.sep}`, background: panelOpen ? C.accent + '22' : C.inputBg,
-              color: panelOpen ? C.accent : C.t2, fontWeight: panelOpen ? 700 : 400 }}>
+          <Button variant={panelOpen ? 'primary' : 'secondary'} size="sm" onClick={() => { setPanelOpen(s => !s); if (panelOpen) setPanelItems([]); }} style={{ minWidth: 130 }}>
             {panelOpen ? '⊙ Panel ON' : '○ Detail Panel'}
-          </button>
+          </Button>
 
-          <button onClick={() => setShowEventModal(true)} style={{ background: C.accent, color: '#000', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: C.font }}>+ New Event</button>
+          <Button onClick={() => setShowEventModal(true)} style={{ padding: '8px 18px' }}>+ New Event</Button>
         </div>
 
         <div style={{ flex: 1, overflow: 'hidden' }}>

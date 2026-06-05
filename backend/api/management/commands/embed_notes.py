@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from api.models import Note
-from api.ai_utils import get_embedding
+from api.ai import get_embedding
 
 
 class Command(BaseCommand):

@@ -8,13 +8,9 @@ import 'reactflow/dist/style.css';
 import api from '../api';
 import { SkeletonRow } from '../components/Skeleton';
 
-const C = {
-  bg: '#1C1C1E', sidebar: '#2C2C2E', panel: '#2C2C2E', cardHov: '#3A3A3C',
-  sep: 'rgba(84,84,88,0.55)', inputBg: 'rgba(255,255,255,0.08)',
-  accent: '#FFD60A', t1: '#FFFFFF', t2: 'rgba(235,235,245,0.6)',
-  t3: 'rgba(235,235,245,0.28)', danger: '#FF453A', success: '#32D74B',
-  font: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif",
-};
+import C from '../theme';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 
 const COLOR_MAP = { yellow: '#FFD60A', blue: '#0A84FF', green: '#32D74B', red: '#FF453A', purple: '#BF5AF2', orange: '#FF9F0A' };
 const STATUS_COLOR = { todo: '#636366', in_progress: '#FF9F0A', done: '#32D74B' };
@@ -28,11 +24,11 @@ function StepNode({ data }) {
   return (
     <div onClick={data.onClick}
       style={{
-        background: '#2C2C2E', border: `2px solid ${borderColor}`,
+        background: C.card, border: `2px solid ${borderColor}`,
         borderRadius: 12, padding: '12px 16px', minWidth: 180, maxWidth: 220,
         cursor: 'pointer', fontFamily: C.font,
-        boxShadow: isDone ? `0 0 0 3px ${borderColor}33` : 'none',
-        transition: 'all 0.2s', position: 'relative'
+        boxShadow: isDone ? `0 0 0 3px ${borderColor}33` : '0 4px 16px rgba(0,0,0,0.2)',
+        transition: 'all 0.18s ease', position: 'relative',
       }}>
       
       {/* EXPLICIT ID ADDED TO FIX EDGE ERROR */}
@@ -102,19 +98,19 @@ function NewPathModal({ onSave, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16, width: 420, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2, width: 420, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <span style={{ fontWeight: 700, fontSize: 16, color: C.t1 }}>New Learning Path</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.t2, fontSize: 22, cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div><label style={lbl}>Path Name</label><input style={inp} placeholder="e.g. GCP Cloud Engineer" value={name} onChange={e => setName(e.target.value)} autoFocus /></div>
+          <div><label style={lbl}>Path Name</label><Input placeholder="e.g. GCP Cloud Engineer" value={name} onChange={e => setName(e.target.value)} autoFocus /></div>
           <div><label style={lbl}>Description</label><textarea style={{ ...inp, resize: 'none' }} rows={2} placeholder="What will you learn?" value={description} onChange={e => setDescription(e.target.value)} /></div>
           <div><label style={lbl}>Color</label><div style={{ display: 'flex', gap: 10 }}>{Object.entries(COLOR_MAP).map(([n, hex]) => (<button key={n} onClick={() => setColor(n)} style={{ width: 26, height: 26, borderRadius: '50%', background: hex, cursor: 'pointer', border: color === n ? '3px solid white' : '3px solid transparent' }} />))}</div></div>
         </div>
         <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose} style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`, color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={() => name.trim() && onSave({ name, description, color })} style={{ flex: 1, background: C.accent, color: '#000', border: 'none', padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: C.font }}>Create Path</button>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button onClick={() => name.trim() && onSave({ name, description, color })} style={{ flex: 1 }}>Create Path</Button>
         </div>
       </div>
     </div>
@@ -153,47 +149,38 @@ function AutoExtractModal({ onSave, onClose }) {
   
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16, width: 420, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2, width: 420, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <span style={{ fontWeight: 700, fontSize: 16, color: C.accent }}>✨ AI Course Extractor</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.t2, fontSize: 22, cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          
           <div>
             <label style={{ display: 'block', fontSize: 11, color: C.t3, marginBottom: 5, fontWeight: 700 }}>COURSE TITLE</label>
-            <input style={inp} placeholder="e.g. Anthropic API Course" value={topic} onChange={e => setTopic(e.target.value)} />
+            <Input placeholder="e.g. Anthropic API Course" value={topic} onChange={e => setTopic(e.target.value)} />
           </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ height: 1, flex: 1, background: C.sep }}></div>
+            <div style={{ height: 1, flex: 1, background: C.sep }} />
             <span style={{ fontSize: 11, color: C.t3, fontWeight: 700 }}>OPTION 1: URL</span>
-            <div style={{ height: 1, flex: 1, background: C.sep }}></div>
+            <div style={{ height: 1, flex: 1, background: C.sep }} />
           </div>
-
-          <input style={inp} placeholder="https://..." value={url} onChange={e => setUrl(e.target.value)} />
-
+          <Input placeholder="https://..." value={url} onChange={e => setUrl(e.target.value)} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ height: 1, flex: 1, background: C.sep }}></div>
-            <span style={{ fontSize: 11, color: C.t3, fontWeight: 700 }}>OPTION 2: PASTE TEXT (100% ACCURATE)</span>
-            <div style={{ height: 1, flex: 1, background: C.sep }}></div>
+            <div style={{ height: 1, flex: 1, background: C.sep }} />
+            <span style={{ fontSize: 11, color: C.t3, fontWeight: 700 }}>OPTION 2: PASTE TEXT</span>
+            <div style={{ height: 1, flex: 1, background: C.sep }} />
           </div>
-          
-          <textarea 
-            style={{ ...inp, height: 100, resize: 'none' }} 
-            placeholder="Highlight the syllabus on the website, copy it, and paste it here..." 
-            value={pastedText} 
-            onChange={e => setPastedText(e.target.value)} 
-          />
-
+          <textarea style={{ ...inp, height: 100, resize: 'none' }}
+            placeholder="Highlight the syllabus on the website, copy it, and paste it here..."
+            value={pastedText} onChange={e => setPastedText(e.target.value)} />
           {error && <div style={{ color: C.danger, fontSize: 12 }}>{error}</div>}
         </div>
         <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose} style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`, color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={handleExtract} disabled={loading || (!url && !pastedText)}
-            style={{ flex: 1, background: C.accent, color: '#000', border: 'none', padding: 10, borderRadius: 10, cursor: loading ? 'wait' : 'pointer', fontSize: 13, fontWeight: 700, fontFamily: C.font, opacity: loading ? 0.5 : 1 }}>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button onClick={handleExtract} disabled={loading || (!url && !pastedText)}
+            style={{ flex: 1, opacity: loading ? 0.5 : 1, cursor: loading ? 'wait' : 'pointer' }}>
             {loading ? 'Reading...' : 'Generate Path'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -218,7 +205,7 @@ function NewStepModal({ pathId, nextOrder, onSave, onBulkSave, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16, width: 480, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2, width: 480, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <span style={{ fontWeight: 700, fontSize: 16, color: C.t1 }}>Add Steps</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.t2, fontSize: 22, cursor: 'pointer' }}>×</button>
@@ -231,10 +218,10 @@ function NewStepModal({ pathId, nextOrder, onSave, onBulkSave, onClose }) {
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '55vh', overflowY: 'auto' }}>
           {mode === 'single' ? (
             <>
-              <div><label style={lbl}>Step Title</label><input style={inp} value={title} onChange={e => setTitle(e.target.value)} autoFocus /></div>
+              <div><label style={lbl}>Step Title</label><Input value={title} onChange={e => setTitle(e.target.value)} autoFocus /></div>
               <div><label style={lbl}>Description</label><textarea style={{ ...inp, resize: 'none' }} rows={2} value={description} onChange={e => setDescription(e.target.value)} /></div>
-              <div><label style={lbl}>Resource URL <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label><input style={inp} value={resourceUrl} onChange={e => setResourceUrl(e.target.value)} /></div>
-              <div><label style={lbl}>Estimated Hours <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label><input type="number" style={inp} value={estimatedHours} onChange={e => setEstimatedHours(e.target.value)} /></div>
+              <div><label style={lbl}>Resource URL <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label><Input value={resourceUrl} onChange={e => setResourceUrl(e.target.value)} /></div>
+              <div><label style={lbl}>Estimated Hours <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label><Input type="number" value={estimatedHours} onChange={e => setEstimatedHours(e.target.value)} /></div>
             </>
           ) : (
             <>
@@ -242,7 +229,7 @@ function NewStepModal({ pathId, nextOrder, onSave, onBulkSave, onClose }) {
               {previewLines.length > 0 && (
                 <div>
                   <label style={lbl}>Preview — {previewLines.length} steps will be created</label>
-                  <div style={{ background: '#1C1C1E', borderRadius: 8, padding: 10, maxHeight: 160, overflowY: 'auto' }}>
+                  <div style={{ background: C.bg, borderRadius: 8, padding: 10, maxHeight: 160, overflowY: 'auto' }}>
                     {previewLines.map((line, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', borderBottom: i < previewLines.length - 1 ? `1px solid ${C.sep}` : 'none' }}>
                         <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#636366', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', flexShrink: 0 }}>{i + 1}</div>
@@ -256,8 +243,8 @@ function NewStepModal({ pathId, nextOrder, onSave, onBulkSave, onClose }) {
           )}
         </div>
         <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose} style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`, color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={() => { if (mode === 'single') { title.trim() && onSave({ path: pathId, title, description, resource_url: resourceUrl, order: nextOrder, status: 'todo', estimated_hours: estimatedHours ? parseFloat(estimatedHours) : null }); } else { previewLines.length > 0 && onBulkSave(previewLines); } }} style={{ flex: 1, background: C.accent, color: '#000', border: 'none', padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: C.font }}>{mode === 'single' ? 'Add Step' : `Add ${previewLines.length} Steps`}</button>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button style={{ flex: 1 }} onClick={() => { if (mode === 'single') { title.trim() && onSave({ path: pathId, title, description, resource_url: resourceUrl, order: nextOrder, status: 'todo', estimated_hours: estimatedHours ? parseFloat(estimatedHours) : null }); } else { previewLines.length > 0 && onBulkSave(previewLines); } }}>{mode === 'single' ? 'Add Step' : `Add ${previewLines.length} Steps`}</Button>
         </div>
       </div>
     </div>
@@ -273,27 +260,27 @@ function AddToCalendarModal({ step, pathName, onSave, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16, width: 380, fontFamily: C.font }}>
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2, width: 380, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <span style={{ fontWeight: 700, fontSize: 15, color: C.t1 }}>Add to Calendar</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.t2, fontSize: 22, cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ background: C.inputBg, borderRadius: 8, padding: '10px 12px' }}>
+          <div style={{ background: C.inputBg, borderRadius: C.radius, padding: '10px 12px' }}>
             <div style={{ fontSize: 11, color: C.t3, marginBottom: 4 }}>COURSE</div>
             <div style={{ fontSize: 12, color: C.t2 }}>{pathName}</div>
             <div style={{ fontSize: 11, color: C.t3, marginBottom: 4, marginTop: 8 }}>CHAPTER</div>
             <div style={{ fontSize: 13, color: C.t1, fontWeight: 600 }}>📚 {step.title}</div>
           </div>
-          <div><label style={lbl}>Date</label><input type="date" style={inp} value={date} onChange={e => setDate(e.target.value)} /></div>
+          <div><label style={lbl}>Date</label><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
           <div style={{ display: 'flex', gap: 10 }}>
-            <div style={{ flex: 1 }}><label style={lbl}>Start</label><input type="time" style={inp} value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
-            <div style={{ flex: 1 }}><label style={lbl}>End</label><input type="time" style={inp} value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
+            <div style={{ flex: 1 }}><label style={lbl}>Start</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
+            <div style={{ flex: 1 }}><label style={lbl}>End</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose} style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`, color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={() => onSave({ date, startTime, endTime })} style={{ flex: 1, background: C.accent, color: '#000', border: 'none', padding: 10, borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: C.font }}>Add to Calendar</button>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button onClick={() => onSave({ date, startTime, endTime })} style={{ flex: 1 }}>Add to Calendar</Button>
         </div>
       </div>
     </div>
@@ -325,8 +312,8 @@ function StepPanel({ step, pathName, onUpdateStatus, onAddToCalendar, onDelete, 
               ))}
             </div>
           </div>
-          <button onClick={() => setShowCalModal(true)} style={{ padding: '10px 14px', borderRadius: 10, fontSize: 13, cursor: 'pointer', border: `1px solid ${C.accent}`, background: C.accent + '15', color: C.accent, fontWeight: 700, fontFamily: C.font }}>📅 Add to Calendar</button>
-          <button onClick={() => onDelete(step.id)} style={{ padding: '10px 14px', borderRadius: 10, fontSize: 13, cursor: 'pointer', border: `1px solid ${C.danger}`, background: 'transparent', color: C.danger, fontFamily: C.font }}>Delete Step</button>
+          <Button variant="ghost" onClick={() => setShowCalModal(true)} style={{ border: `1px solid ${C.accent}`, background: C.accent + '15', color: C.accent }}>📅 Add to Calendar</Button>
+          <Button variant="ghost" onClick={() => onDelete(step.id)} style={{ border: `1px solid ${C.danger}`, color: C.danger }}>Delete Step</Button>
         </div>
       </div>
       {showCalModal && <AddToCalendarModal step={step} pathName={pathName} onSave={async (data) => { await onAddToCalendar(step, data.date, data.startTime, data.endTime); setShowCalModal(false); }} onClose={() => setShowCalModal(false)} />}
@@ -385,18 +372,13 @@ function LearningCoach({ isOpen, onClose, paths }) {
           value={query}
           onChange={e => setQuery(e.target.value)}
         />
-        <button 
+        <Button
           onClick={askCoach}
           disabled={loading || !query.trim()}
-          style={{ 
-            marginTop: 12, width: '100%', background: C.accent, color: '#000', 
-            fontWeight: 700, border: 'none', padding: '12px', borderRadius: 10, 
-            cursor: loading ? 'wait' : 'pointer', fontFamily: C.font, fontSize: 13,
-            opacity: (loading || !query.trim()) ? 0.5 : 1
-          }}
+          style={{ marginTop: 12, width: '100%', opacity: (loading || !query.trim()) ? 0.5 : 1 }}
         >
           {loading ? 'Thinking... 🧠' : 'Ask Coach'}
-        </button>
+        </Button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px', color: C.t1, fontSize: 14, lineHeight: 1.6 }}>
@@ -707,16 +689,15 @@ export default function Learning() {
                 {selectedPath.description && <div style={{ fontSize: 12, color: C.t3, marginTop: 2 }}>{selectedPath.description}</div>}
               </div>
               {/* <-- AI COACH BUTTON ADDED HERE --> */}
-              <button onClick={() => setShowCoach(true)}
-                style={{ background: 'transparent', border: `1px solid ${C.accent}`, color: C.accent, borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: C.font }}>
+              <Button variant="ghost" onClick={() => setShowCoach(true)} style={{ border: `1px solid ${C.accent}`, color: C.accent }}>
                 ✨ Ask Coach
-              </button>
+              </Button>
 
               {selectedPath.steps.length > 1 && (
-                <button onClick={handleAutoArrange} title="Sort all chapters into a clean grid" style={{ background: C.inputBg, border: `1px solid ${C.sep}`, borderRadius: 10, padding: '8px 14px', fontSize: 12, color: C.t2, cursor: 'pointer', fontFamily: C.font }}>⊞ Auto-arrange</button>
+                <Button variant="secondary" size="sm" onClick={handleAutoArrange} title="Sort all chapters into a clean grid">⊞ Auto-arrange</Button>
               )}
-              <button onClick={() => setShowNewStep(true)} style={{ background: C.accent, color: '#000', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: C.font }}>+ Add Steps</button>
-              <button onClick={() => handleDeletePath(selectedPath.id)} style={{ background: 'transparent', border: `1px solid ${C.danger}`, borderRadius: 10, padding: '8px 14px', fontSize: 13, color: C.danger, cursor: 'pointer', fontFamily: C.font }}>Delete</button>
+              <Button onClick={() => setShowNewStep(true)}>+ Add Steps</Button>
+              <Button variant="ghost" onClick={() => handleDeletePath(selectedPath.id)} style={{ border: `1px solid ${C.danger}`, color: C.danger }}>Delete</Button>
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
               {selectedPath.steps.length === 0 ? (
@@ -724,7 +705,7 @@ export default function Learning() {
                   <div style={{ fontSize: 52, opacity: 0.3, marginBottom: 16 }}>🗺️</div>
                   <p style={{ color: C.t2, fontSize: 15, marginBottom: 8 }}>No steps yet</p>
                   <p style={{ color: C.t3, fontSize: 13, marginBottom: 24 }}>Paste a list of chapters or add them one by one</p>
-                  <button onClick={() => setShowNewStep(true)} style={{ background: C.accent, color: '#000', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: C.font }}>+ Add First Step</button>
+                  <Button onClick={() => setShowNewStep(true)}>+ Add First Step</Button>
                 </div>
               ) : (
                 <ReactFlow nodes={nodes} edges={edges} onNodesChange={handleNodesChange} onEdgesChange={onEdgesChange} nodeTypes={nodeTypes} fitView style={{ background: C.bg }} defaultEdgeOptions={{ type: 'smoothstep' }}>
@@ -739,7 +720,7 @@ export default function Learning() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center' }}>
             <div style={{ fontSize: 56, opacity: 0.3, marginBottom: 16 }}>🗺️</div>
             <p style={{ color: C.t2, fontSize: 15, marginBottom: 8 }}>No learning path selected</p>
-            <button onClick={() => setShowNewPath(true)} style={{ background: C.accent, color: '#000', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: C.font }}>+ Create First Path</button>
+            <Button onClick={() => setShowNewPath(true)}>+ Create First Path</Button>
           </div>
         )}
       </div>
@@ -747,7 +728,7 @@ export default function Learning() {
       {selectedStep && <StepPanel step={selectedStep} pathName={selectedPath?.name || ''} onUpdateStatus={handleUpdateStatus} onAddToCalendar={handleAddToCalendar} onDelete={handleDeleteStep} onClose={() => setSelectedStep(null)} />}
       {bulkLoading && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
-          <div style={{ background: '#2C2C2E', borderRadius: 14, padding: '24px 32px', color: C.t1, fontFamily: C.font, textAlign: 'center' }}>
+          <div style={{ background: C.card, borderRadius: C.radius + 2, padding: '24px 32px', color: C.t1, fontFamily: C.font, textAlign: 'center', border: `1px solid ${C.sep}` }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>⚡</div>
             <p style={{ margin: 0, fontWeight: 600 }}>Creating steps…</p>
           </div>

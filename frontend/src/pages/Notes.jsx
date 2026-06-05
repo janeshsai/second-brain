@@ -1,22 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
-
-// macOS dark mode color tokens
-const C = {
-  bg:        '#1C1C1E',
-  sidebar:   '#2C2C2E',
-  list:      '#242426',
-  sep:       'rgba(84,84,88,0.55)',
-  accent:    '#FFD60A',
-  hover:     'rgba(255,255,255,0.06)',
-  selected:  'rgba(255,214,10,0.14)',
-  inputBg:   'rgba(255,255,255,0.08)',
-  t1:        '#FFFFFF',
-  t2:        'rgba(235,235,245,0.6)',
-  t3:        'rgba(235,235,245,0.28)',
-  danger:    '#FF453A',
-  font:      "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif",
-};
+import C from '../theme';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 
 function SidebarBtn({ active, onClick, children }) {
   const [hov, setHov] = useState(false);
@@ -53,6 +39,8 @@ function NoteRow({ note, isSelected, menuOpenId, setMenuOpenId, onOpen, onDelete
         padding: '10px 14px', borderBottom: `1px solid ${C.sep}`, cursor: 'pointer',
         background: isSelected ? C.selected : hov ? C.hover : 'transparent',
         position: 'relative', transition: 'background 0.12s',
+        borderLeft: isSelected ? `3px solid ${C.accent}` : '3px solid transparent',
+        paddingLeft: isSelected ? 11 : 14,
       }}>
       {/* three-dot menu */}
       <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}
@@ -343,9 +331,8 @@ export default function Notes() {
           </div>
           {showNewFolder ? (
             <form onSubmit={createFolder} style={{ display: 'flex', gap: 4 }}>
-              <input autoFocus value={newFolderName} onChange={e => setNewFolderName(e.target.value)}
-                placeholder="Folder name"
-                style={{ flex: 1, background: C.inputBg, border: 'none', borderRadius: 6, padding: '5px 8px', color: C.t1, fontSize: 12, outline: 'none', minWidth: 0, fontFamily: C.font }} />
+              <Input autoFocus size="sm" value={newFolderName} onChange={e => setNewFolderName(e.target.value)}
+                placeholder="Folder name" style={{ flex: 1, minWidth: 0 }} />
               <button type="submit" style={{ color: C.accent, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>✓</button>
               <button type="button" onClick={() => setShowNewFolder(false)} style={{ color: C.t2, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
             </form>
@@ -366,17 +353,9 @@ export default function Notes() {
             <span style={{ fontWeight: 700, fontSize: 18 }}>
               {selectedFolderId ? folders.find(f => f.id === selectedFolderId)?.name : 'All Notes'}
             </span>
-            <button onClick={newNote} style={{
-              background: C.accent, color: '#000', border: 'none', borderRadius: 8,
-              padding: '5px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: C.font,
-            }}>+ New</button>
+            <Button size="sm" onClick={newNote}>+ New</Button>
           </div>
-          <input placeholder="Search" value={search} onChange={e => setSearch(e.target.value)}
-            style={{
-              width: '100%', background: C.inputBg, border: 'none', borderRadius: 8,
-              padding: '7px 10px', color: C.t1, fontSize: 13, outline: 'none',
-              boxSizing: 'border-box', fontFamily: C.font,
-            }} />
+          <Input placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} size="sm" />
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
@@ -413,15 +392,19 @@ export default function Notes() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: C.bg, minWidth: 0 }}>
           <div style={{ padding: '12px 40px', borderBottom: `1px solid ${C.sep}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
             {selectedNote && (
-              <button onClick={handleSummarize} disabled={summarizing}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSummarize}
+                disabled={summarizing}
                 style={{
-                  background: 'rgba(255,214,10,0.1)', border: '1px solid rgba(255,214,10,0.3)',
-                  borderRadius: 8, padding: '4px 12px', fontSize: 11, color: '#FFD60A',
-                  cursor: summarizing ? 'not-allowed' : 'pointer', fontFamily: C.font,
-                  fontWeight: 600, opacity: summarizing ? 0.6 : 1,
+                  background: 'rgba(255,214,10,0.1)',
+                  border: '1px solid rgba(255,214,10,0.3)',
+                  color: C.accent,
+                  opacity: summarizing ? 0.6 : 1,
                 }}>
                 {summarizing ? '✨ Summarizing…' : '✨ Summarize'}
-              </button>
+              </Button>
             )}
             <span style={{ fontSize: 11, color: C.t3 }}>{saveLabel}</span>
             {selectedNote && <span style={{ fontSize: 11, color: C.t3 }}>{new Date(selectedNote.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>}
@@ -476,10 +459,7 @@ export default function Notes() {
           <div style={{ fontSize: 56, marginBottom: 20, opacity: 0.3 }}>📝</div>
           <p style={{ color: C.t2, fontSize: 15, fontWeight: 500, marginBottom: 6 }}>Select a note or create a new one</p>
           <p style={{ color: C.t3, fontSize: 13, marginBottom: 24 }}>Your notes auto-save as you type</p>
-          <button onClick={newNote} style={{
-            background: C.accent, color: '#000', border: 'none', borderRadius: 10,
-            padding: '10px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: C.font,
-          }}>+ New Note</button>
+          <Button onClick={newNote}>+ New Note</Button>
         </div>
       )}
     </div>

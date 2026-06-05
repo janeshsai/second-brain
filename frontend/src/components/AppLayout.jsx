@@ -1,17 +1,9 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-//import SearchModal from './SearchModal';
 import AISearch from './AISearch';
+import Button from './ui/Button';
 import { FileText, Bookmark, Target, CalendarDays, GraduationCap, Search, LogOut } from 'lucide-react';
-
-//change
-
-const C = {
-  sidebar: '#2C2C2E', sep: 'rgba(84,84,88,0.55)',
-  accent: '#FFD60A', t1: '#FFFFFF', t2: 'rgba(235,235,245,0.6)',
-  t3: 'rgba(235,235,245,0.28)', danger: '#FF453A',
-  font: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif",
-};
+import C from '../theme';
 
 // All app sections in fixed order — add new ones here only
 const TABS = [
@@ -29,30 +21,30 @@ function SidebarButton({ icon, label, onClick, isActive = false, danger = false,
         <div 
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
-            style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', marginBottom: 4 }}
+            style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center', marginBottom: C.space.xs }}
         >
             {/* The visible button — always 44x44 icon */}
-            <button onClick={onClick}
+            <Button
+                onClick={onClick}
+                variant={danger ? 'danger' : isActive ? 'primary' : 'ghost'}
+                size="sm"
                 style={{
                     width: 44,
                     height: 44,
                     borderRadius: 12,
-                    border: 'none',
-                    background: isActive ? C.accent : (hovered ? 'rgba(255,255,255,0.08)' : 'transparent'),
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'background 0.15s',
-                    zIndex: 2,
-                }}>
+                    backgroundColor: isActive ? C.accent : (hovered ? 'rgba(255,255,255,0.08)' : 'transparent'),
+                    color: isActive ? '#000' : (danger ? C.danger : 'rgba(235,235,245,0.7)'),
+                    padding: 0,
+                    minHeight: 44,
+                }}
+            >
                 {icon}
-            </button>
+            </Button>
 
             {/* The expanding label — appears on hover, extends to the right */}
             <div style={{
                 position: 'absolute',
-                left: 54,  // just right of the 44px button + 10px gap
+                left: 54,
                 top: '50%',
                 transform: `translateY(-50%) translateX(${hovered ? 0 : -8}px)`,
                 opacity: hovered ? 1 : 0,
@@ -114,8 +106,8 @@ export default function AppLayout({ children }) {
           flexDirection: 'column',
           alignItems: 'center',
           borderRight: `1px solid ${C.sep}`,
-          paddingTop: 16,
-          paddingBottom: 16,
+          paddingTop: C.space.xl,
+          paddingBottom: C.space.xl,
           flexShrink: 0,
           zIndex: 10,
           overflow: 'visible',  // ← allow buttons to expand outside
@@ -123,7 +115,7 @@ export default function AppLayout({ children }) {
         >
         {/* App logo / brain icon at top */}
         <div style={{
-            fontSize: 22, marginBottom: 20,
+            fontSize: 22, marginBottom: C.space.xl,
             width: '100%', display: 'flex', alignItems: 'center',
             justifyContent: 'center',
         }}>

@@ -1,44 +1,121 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
+import C from '../theme';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 
-function Login() {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const navigate = useNavigate();
+export default function Login() {
+  const [username, setUsername]   = useState('');
+  const [password, setPassword]   = useState('');
+  const [error, setError]         = useState('');
+  const [loading, setLoading]     = useState(false);
+  const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await api.post('/api/login/', { username, password });
-            // For now, we store the tokens in localStorage so you can see them easily
-            localStorage.setItem('access', response.data.access);
-            localStorage.setItem('refresh', response.data.refresh);
-            navigate('/'); // Send them to the dashboard
-        } catch (error) {
-            alert('Invalid credentials!');
-        }
-    };
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setError('Username and password are required.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.post('/api/login/', { username, password });
+      localStorage.setItem('access', res.data.access);
+      localStorage.setItem('refresh', res.data.refresh);
+      navigate('/');
+    } catch (err) {
+      const detail = err.response?.data?.detail;
+      setError(detail || 'Invalid credentials. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
-            <form onSubmit={handleLogin} className="bg-slate-800 p-8 rounded-lg shadow-lg flex flex-col gap-4 w-80">
-                <h2 className="text-2xl font-bold text-emerald-400 mb-4 text-center">Access Brain</h2>
-                <input 
-                    type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)}
-                    className="p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                />
-                <input 
-                    type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
-                    className="p-2 rounded bg-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                />
-                <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold py-2 rounded">Login</button>
-                <p className="text-center text-sm text-slate-400 mt-2">
-                    Don't have an account? <a href="/register" className="text-emerald-400 hover:underline">Register here</a>
-                </p>
-            </form>
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: C.bg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: C.font,
+      padding: C.space.lg,
+    }}>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: C.space.xl }}>
+          <div style={{ fontSize: 44, marginBottom: C.space.sm }}>🧠</div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.t1, margin: 0 }}>Second Brain</h1>
+          <p style={{ fontSize: 13, color: C.t3, marginTop: C.space.xs }}>Your personal knowledge system</p>
         </div>
-    );
-}
 
-export default Login;
+        {/* Card */}
+        <div style={{
+          background: C.card,
+          border: `1px solid ${C.sep}`,
+          borderRadius: C.radius + 4,
+          padding: C.space.xl,
+          backdropFilter: 'blur(12px)',
+        }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600, color: C.t1, margin: `0 0 ${C.space.lg}px` }}>Sign in</h2>
+
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: C.space.md }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: C.space.xs, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Username
+              </label>
+              <Input
+                type="text"
+                placeholder="your username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                autoComplete="username"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: C.t3, marginBottom: C.space.xs, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Password
+              </label>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error && (
+              <div style={{
+                background: 'rgba(255,69,58,0.12)',
+                border: `1px solid rgba(255,69,58,0.3)`,
+                borderRadius: C.radius,
+                padding: `${C.space.sm}px ${C.space.md}px`,
+                fontSize: 13,
+                color: C.danger,
+              }}>
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" style={{ width: '100%', marginTop: C.space.xs }} disabled={loading}>
+              {loading ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+        </div>
+
+        <p style={{ textAlign: 'center', marginTop: C.space.lg, fontSize: 13, color: C.t3 }}>
+          No account?{' '}
+          <Link to="/register" style={{ color: C.accent, textDecoration: 'none', fontWeight: 600 }}>
+            Create one
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

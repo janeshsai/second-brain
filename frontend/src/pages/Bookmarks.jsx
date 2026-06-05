@@ -1,16 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { Linkify } from '../utils/linkify';
-
-const C = {
-  bg: '#1C1C1E', sidebar: '#2C2C2E', card: '#2C2C2E',
-  cardHov: '#3A3A3C', sep: 'rgba(84,84,88,0.55)',
-  accent: '#FFD60A', hover: 'rgba(255,255,255,0.06)',
-  inputBg: 'rgba(255,255,255,0.08)', t1: '#FFFFFF',
-  t2: 'rgba(235,235,245,0.6)', t3: 'rgba(235,235,245,0.28)',
-  danger: '#FF453A', success: '#32D74B',
-  font: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif",
-};
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import Badge from '../components/ui/Badge';
+import C from '../theme';
 
 const CAT_COLORS = [
   { bg: 'rgba(191,90,242,0.15)', text: '#BF5AF2', border: 'rgba(191,90,242,0.3)' },
@@ -66,14 +62,21 @@ function BookmarkCard({ bm, viewMode, categories, menuOpenId, setMenuOpenId, onE
   const isGrid = viewMode === 'grid';
 
   return (
-    <div onClick={() => onEdit(bm)}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+    <Card onClick={() => onEdit(bm)}
       style={{
-        background: hov ? C.cardHov : C.card, border: `1px solid ${hov ? 'rgba(255,255,255,0.12)' : C.sep}`,
-        borderRadius: 12, padding: isGrid ? '14px' : '12px 14px',
-        display: isGrid ? 'block' : 'flex', gap: 12, alignItems: 'flex-start',
-        cursor: 'pointer', transition: 'all 0.15s', position: 'relative',
-      }}>
+        background: hov ? C.cardHov : C.card,
+        border: `1px solid ${hov ? 'rgba(255,255,255,0.12)' : C.sep}`,
+        padding: isGrid ? '14px' : '12px 14px',
+        display: isGrid ? 'block' : 'flex',
+        gap: 12,
+        alignItems: 'flex-start',
+        cursor: 'pointer',
+        transition: 'transform 0.16s ease, box-shadow 0.16s ease',
+        transform: hov ? 'translateY(-1px)' : 'none',
+        position: 'relative',
+      }}
+      hoverable
+    >
 
       {/* three-dot */}
       <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 10 }}
@@ -145,23 +148,23 @@ function BookmarkCard({ bm, viewMode, categories, menuOpenId, setMenuOpenId, onE
         )}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
           {pal && bm.category_name && (
-            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 100, background: pal.bg, color: pal.text, border: `1px solid ${pal.border}` }}>
+            <Badge style={{ background: pal.bg, color: pal.text, border: `1px solid ${pal.border}` }}>
               {bm.category_name}
-            </span>
+            </Badge>
           )}
           {bm.progress && (
-            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 100, background: 'rgba(50,209,75,0.12)', color: C.success, border: '1px solid rgba(50,209,75,0.25)' }}>
+            <Badge variant="success">
               📍 {bm.progress}
-            </span>
+            </Badge>
           )}
           {lastOpened && <span style={{ fontSize: 11, color: C.t3 }}>{lastOpened}</span>}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
-function Modal({ bm, folders, categories, onSave, onClose, onAddCategory }) {
+function BookmarkModal({ bm, folders, categories, onSave, onClose, onAddCategory }) {
   const [url, setUrl] = useState(bm?.url || '');
   const [title, setTitle] = useState(bm?.title || '');
   const [content, setContent] = useState(bm?.content || '');
@@ -172,12 +175,13 @@ function Modal({ bm, folders, categories, onSave, onClose, onAddCategory }) {
   const [newCat, setNewCat] = useState('');
   const [showNewCat, setShowNewCat] = useState(false);
 
-  const inp = {
-    width: '100%', background: C.inputBg, border: `1px solid ${C.sep}`, borderRadius: 8,
-    padding: '9px 12px', color: C.t1, fontSize: 13, outline: 'none',
+  const inputStyle = {
+    width: '100%', background: C.inputBg, border: `1px solid ${C.sep}`, borderRadius: 10,
+    padding: '10px 14px', color: C.t1, fontSize: 13, outline: 'none',
     fontFamily: C.font, boxSizing: 'border-box', transition: 'border 0.15s',
   };
-  const lbl = { display: 'block', fontSize: 11, color: C.t3, marginBottom: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' };
+
+  const labelStyle = { display: 'block', fontSize: 11, color: C.t3, marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' };
 
   const handleSave = () => onSave({ url: normalizeUrl(url), title, content, progress, category: catId || null, folder: folderId || null, is_favorite: isFav });
   const handleAddCat = async e => {
@@ -188,53 +192,61 @@ function Modal({ bm, folders, categories, onSave, onClose, onAddCategory }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16, width: '100%', maxWidth: 500, boxShadow: '0 24px 64px rgba(0,0,0,0.7)', fontFamily: C.font }}>
+    <Modal onClose={onClose}>
+      <Card style={{ width: '100%', maxWidth: 540, borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <span style={{ fontWeight: 700, fontSize: 16 }}>{bm ? 'Edit Bookmark' : 'New Bookmark'}</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.t2, fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+          <Button variant="ghost" onClick={onClose} style={{ padding: '0 6px', fontSize: 22, lineHeight: 1 }}>×</Button>
         </div>
 
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '65vh', overflowY: 'auto' }}>
-          <div><label style={lbl}>URL <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label>
-            <input style={inp} placeholder="https://… or leave blank" value={url} onChange={e => setUrl(e.target.value)} /></div>
-          <div><label style={lbl}>Title <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label>
-            <input style={inp} placeholder="Give it a name…" value={title} onChange={e => setTitle(e.target.value)} /></div>
-          <div><label style={lbl}>Notes / Info</label>
-            <textarea style={{ ...inp, resize: 'none' }} rows={3} placeholder="Any context you want to remember…" value={content} onChange={e => setContent(e.target.value)} /></div>
-          <div><label style={lbl}>Progress <span style={{ color: C.t3, textTransform: 'none' }}>(e.g. "Chapter 42", "45%", "Ep 5 of 12")</span></label>
-            <input style={inp} placeholder="Where did you leave off?" value={progress} onChange={e => setProgress(e.target.value)} /></div>
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div>
+            <div style={labelStyle}>URL <span style={{ color: C.t3, fontWeight: 400, textTransform: 'none' }}>(optional)</span></div>
+            <Input placeholder="https://… or leave blank" value={url} onChange={e => setUrl(e.target.value)} />
+          </div>
+          <div>
+            <div style={labelStyle}>Title <span style={{ color: C.t3, fontWeight: 400, textTransform: 'none' }}>(optional)</span></div>
+            <Input placeholder="Give it a name…" value={title} onChange={e => setTitle(e.target.value)} />
+          </div>
+          <div>
+            <div style={labelStyle}>Notes / Info</div>
+            <textarea style={{ ...inputStyle, resize: 'none', minHeight: 100 }} rows={3} placeholder="Any context you want to remember…" value={content} onChange={e => setContent(e.target.value)} />
+          </div>
+          <div>
+            <div style={labelStyle}>Progress <span style={{ color: C.t3, fontWeight: 400, textTransform: 'none' }}>(e.g. "Chapter 42", "45%", "Ep 5 of 12")</span></div>
+            <Input placeholder="Where did you leave off?" value={progress} onChange={e => setProgress(e.target.value)} />
+          </div>
 
           <div>
-            <label style={lbl}>Category <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <select style={{ ...inp, flex: 1 }} value={catId} onChange={e => setCatId(e.target.value ? Number(e.target.value) : '')}>
+            <div style={labelStyle}>Category <span style={{ color: C.t3, fontWeight: 400, textTransform: 'none' }}>(optional)</span></div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <select style={{ ...inputStyle, flex: 1 }} value={catId} onChange={e => setCatId(e.target.value ? Number(e.target.value) : '')}>
                 <option value="">No category</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-              <button onClick={() => setShowNewCat(s => !s)} style={{ background: C.inputBg, border: `1px solid ${C.sep}`, borderRadius: 8, color: C.t1, fontSize: 13, padding: '0 14px', cursor: 'pointer', fontFamily: C.font }}>+ New</button>
+              <Button variant="secondary" onClick={() => setShowNewCat(s => !s)} style={{ minWidth: 90 }}>+ New</Button>
             </div>
             {showNewCat && (
-              <form onSubmit={handleAddCat} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <input autoFocus style={{ ...inp, flex: 1 }} placeholder="e.g. Manga" value={newCat} onChange={e => setNewCat(e.target.value)} />
-                <button type="submit" style={{ background: C.accent, color: '#000', border: 'none', borderRadius: 8, padding: '0 16px', fontWeight: 700, cursor: 'pointer', fontFamily: C.font }}>Add</button>
+              <form onSubmit={handleAddCat} style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <Input autoFocus style={{ flex: 1 }} placeholder="e.g. Manga" value={newCat} onChange={e => setNewCat(e.target.value)} />
+                <Button type="submit">Add</Button>
               </form>
             )}
           </div>
 
-          <div><label style={lbl}>Folder <span style={{ color: C.t3, textTransform: 'none' }}>(optional)</span></label>
-            <select style={inp} value={folderId} onChange={e => setFolderId(e.target.value ? Number(e.target.value) : '')}>
+          <div>
+            <div style={labelStyle}>Folder <span style={{ color: C.t3, fontWeight: 400, textTransform: 'none' }}>(optional)</span></div>
+            <select style={inputStyle} value={folderId} onChange={e => setFolderId(e.target.value ? Number(e.target.value) : '')}>
               <option value="">No folder</option>
               {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
             </select>
           </div>
 
-          {/* Favorite toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div onClick={() => setIsFav(s => !s)} style={{
-              width: 44, height: 26, borderRadius: 100, cursor: 'pointer',
+              width: 44, height: 26, borderRadius: 999, cursor: 'pointer',
               background: isFav ? C.accent : 'rgba(255,255,255,0.1)',
-              display: 'flex', alignItems: 'center', padding: '0 3px', transition: 'background 0.2s',
+              display: 'flex', alignItems: 'center', padding: '0 4px', transition: 'background 0.2s',
             }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', transform: isFav ? 'translateX(18px)' : 'none', transition: 'transform 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.4)' }} />
             </div>
@@ -242,14 +254,12 @@ function Modal({ bm, folders, categories, onSave, onClose, onAddCategory }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose} style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`, color: C.t1, padding: '10px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={handleSave} style={{ flex: 1, background: C.accent, color: '#000', border: 'none', padding: '10px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: C.font }}>
-            {bm ? 'Save Changes' : 'Add Bookmark'}
-          </button>
+        <div style={{ display: 'flex', gap: 10, padding: '18px 20px', borderTop: `1px solid ${C.sep}` }}>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button onClick={handleSave} style={{ flex: 1 }}>{bm ? 'Save Changes' : 'Add Bookmark'}</Button>
         </div>
-      </div>
-    </div>
+      </Card>
+    </Modal>
   );
 }
 
@@ -400,9 +410,9 @@ export default function Bookmarks() {
               <button type="button" onClick={() => setShowNewFolder(false)} style={{ color: C.t2, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
             </form>
           ) : (
-            <button onClick={() => setShowNewFolder(true)} style={{ background: 'none', border: 'none', color: C.t2, fontSize: 12, cursor: 'pointer', padding: '4px 8px', textAlign: 'left', width: '100%', fontFamily: C.font }}>
+            <Button variant="ghost" onClick={() => setShowNewFolder(true)} style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 10px', fontSize: 12 }}>
               + New Folder
-            </button>
+            </Button>
           )}
         </div>
 
@@ -413,21 +423,19 @@ export default function Bookmarks() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Top bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 20px', borderBottom: `1px solid ${C.sep}`, flexShrink: 0 }}>
-          <input
+          <Input
             value={quickAdd || search}
             onChange={e => { setQuickAdd(e.target.value); setSearch(e.target.value); }}
             onKeyDown={handleQuickAdd}
-            placeholder="⚡ Paste URL or type a note → Enter to quick-save,  or type to search"
-            style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`, borderRadius: 10, padding: '9px 14px', color: C.t1, fontSize: 13, outline: 'none', fontFamily: C.font }}
+            placeholder="⚡ Paste URL or type a note → Enter to quick-save, or type to search"
+            style={{ flex: 1, minWidth: 0 }}
           />
-          <button onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}
-            style={{ background: C.inputBg, border: `1px solid ${C.sep}`, borderRadius: 8, padding: '8px 12px', color: C.t1, cursor: 'pointer', fontSize: 15 }}>
+          <Button variant="secondary" onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')} style={{ padding: '8px 12px', minWidth: 48 }}>
             {viewMode === 'grid' ? '☰' : '⊞'}
-          </button>
-          <button onClick={() => { setEditingBm(null); setShowModal(true); }}
-            style={{ background: C.accent, color: '#000', border: 'none', borderRadius: 10, padding: '9px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: C.font, flexShrink: 0 }}>
+          </Button>
+          <Button onClick={() => { setEditingBm(null); setShowModal(true); }} style={{ flexShrink: 0, padding: '9px 18px' }}>
             + New
-          </button>
+          </Button>
         </div>
 
         {/* Grid / List */}
@@ -470,7 +478,7 @@ export default function Bookmarks() {
       </div>
 
       {showModal && (
-        <Modal bm={editingBm} folders={folders} categories={categories}
+        <BookmarkModal bm={editingBm} folders={folders} categories={categories}
           onSave={handleSave} onClose={() => { setShowModal(false); setEditingBm(null); }}
           onAddCategory={handleAddCategory} />
       )}

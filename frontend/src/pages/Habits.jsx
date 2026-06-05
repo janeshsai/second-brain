@@ -4,14 +4,9 @@ import {DndContext,closestCenter,KeyboardSensor,PointerSensor,useSensor,useSenso
 import {arrayMove,SortableContext,sortableKeyboardCoordinates,useSortable,verticalListSortingStrategy,} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-const C = {
-  bg: '#1C1C1E', sidebar: '#2C2C2E', card: '#2C2C2E', cardHov: '#3A3A3C',
-  sep: 'rgba(84,84,88,0.55)', hover: 'rgba(255,255,255,0.06)',
-  inputBg: 'rgba(255,255,255,0.08)',
-  t1: '#FFFFFF', t2: 'rgba(235,235,245,0.6)', t3: 'rgba(235,235,245,0.28)',
-  danger: '#FF453A', success: '#32D74B', accent: '#FFD60A',
-  font: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif",
-};
+import C from '../theme';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 
 const COLOR_MAP = {
   yellow: '#FFD60A', blue: '#0A84FF', green: '#32D74B',
@@ -579,7 +574,7 @@ function NumericModal({ habit, onSave, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex',
       alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16,
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2,
         width: 300, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <div style={{ fontWeight: 700, fontSize: 15, color: C.t1 }}>{habit.name}</div>
@@ -588,13 +583,10 @@ function NumericModal({ habit, onSave, onClose }) {
           </div>
         </div>
         <div style={{ padding: '20px' }}>
-          <input autoFocus type="number" min="0" value={value}
+          <Input autoFocus type="number" min="0" value={value}
             onChange={e => setValue(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && value && onSave(parseInt(value))}
-            style={{ width: '100%', background: C.inputBg, border: `1px solid ${C.sep}`,
-              borderRadius: 8, padding: '12px', color: C.t1, fontSize: 28,
-              outline: 'none', fontFamily: C.font, boxSizing: 'border-box',
-              textAlign: 'center', fontWeight: 700 }}
+            style={{ textAlign: 'center', fontSize: 28, fontWeight: 700 }}
             placeholder="0" />
           {pct !== null && (
             <div style={{ textAlign: 'center', marginTop: 10, fontSize: 13,
@@ -603,16 +595,9 @@ function NumericModal({ habit, onSave, onClose }) {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 10, padding: '14px 20px',
-          borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose}
-            style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`,
-              color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer',
-              fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={() => value && onSave(parseInt(value))}
-            style={{ flex: 1, background: accentColor, color: '#000', border: 'none',
-              padding: 10, borderRadius: 10, cursor: 'pointer',
-              fontSize: 13, fontWeight: 700, fontFamily: C.font }}>Log It</button>
+        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button onClick={() => value && onSave(parseInt(value))} style={{ flex: 1, background: accentColor }}>Log It</Button>
         </div>
       </div>
     </div>
@@ -625,7 +610,7 @@ function CalendarModal({ habit, onSave, onClose }) {
   const [time, setTime] = useState('09:00');
   const [rec, setRec] = useState(habit.frequency === 'daily' ? 'daily' : 'weekly');
   const inp = { width: '100%', background: C.inputBg, border: `1px solid ${C.sep}`,
-    borderRadius: 8, padding: '9px 12px', color: C.t1, fontSize: 13, outline: 'none',
+    borderRadius: C.radius, padding: '9px 12px', color: C.t1, fontSize: 13, outline: 'none',
     fontFamily: C.font, boxSizing: 'border-box' };
   const lbl = { display: 'block', fontSize: 11, color: C.t3, marginBottom: 5,
     fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' };
@@ -633,8 +618,8 @@ function CalendarModal({ habit, onSave, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex',
       alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16,
-        width: 360, fontFamily: C.font }}>
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2,
+        width: 360, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
           <span style={{ fontWeight: 700, fontSize: 15, color: C.t1 }}>Add to Calendar</span>
@@ -642,12 +627,12 @@ function CalendarModal({ habit, onSave, onClose }) {
             style={{ background: 'none', border: 'none', color: C.t2, fontSize: 22, cursor: 'pointer' }}>×</button>
         </div>
         <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ background: C.inputBg, borderRadius: 8, padding: '10px 12px',
+          <div style={{ background: C.inputBg, borderRadius: C.radius, padding: '10px 12px',
             fontSize: 13, color: C.t1, fontWeight: 600 }}>🎯 {habit.name}</div>
           <div><label style={lbl}>Start Date</label>
-            <input type="date" style={inp} value={date} onChange={e => setDate(e.target.value)} /></div>
+            <Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
           <div><label style={lbl}>Time</label>
-            <input type="time" style={inp} value={time} onChange={e => setTime(e.target.value)} /></div>
+            <Input type="time" value={time} onChange={e => setTime(e.target.value)} /></div>
           <div><label style={lbl}>Repeat</label>
             <select style={inp} value={rec} onChange={e => setRec(e.target.value)}>
               <option value="none">One time</option>
@@ -656,16 +641,9 @@ function CalendarModal({ habit, onSave, onClose }) {
             </select>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 10, padding: '14px 20px',
-          borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose}
-            style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`,
-              color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer',
-              fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button onClick={() => onSave({ date, startTime: time, recurrence: rec })}
-            style={{ flex: 1, background: C.accent, color: '#000', border: 'none',
-              padding: 10, borderRadius: 10, cursor: 'pointer',
-              fontSize: 13, fontWeight: 700, fontFamily: C.font }}>Add</button>
+        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button onClick={() => onSave({ date, startTime: time, recurrence: rec })} style={{ flex: 1 }}>Add</Button>
         </div>
       </div>
     </div>
@@ -696,7 +674,7 @@ function EditHabitModal({ habit, onSave, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex',
       alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16,
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2,
         width: '100%', maxWidth: 440, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
@@ -708,7 +686,7 @@ function EditHabitModal({ habit, onSave, onClose }) {
         <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14,
           maxHeight: '65vh', overflowY: 'auto' }}>
           <div><label style={lbl}>Name</label>
-            <input autoFocus style={inp} value={name} onChange={e => setName(e.target.value)} /></div>
+            <Input autoFocus value={name} onChange={e => setName(e.target.value)} /></div>
 
           {/* Frequency */}
           <div><label style={lbl}>Frequency</label>
@@ -768,7 +746,7 @@ function EditHabitModal({ habit, onSave, onClose }) {
 
           {/* Numeric target */}
           <div><label style={lbl}>Numeric Target <span style={{ color: C.t3, textTransform: 'none' }}>(e.g. 20 push-ups)</span></label>
-            <input type="number" style={inp} placeholder="Leave blank for yes/no"
+            <Input type="number" placeholder="Leave blank for yes/no"
               value={target} onChange={e => setTarget(e.target.value)} /></div>
 
           {/* Color */}
@@ -784,13 +762,9 @@ function EditHabitModal({ habit, onSave, onClose }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '14px 20px',
-          borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose}
-            style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`,
-              color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer',
-              fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button
+        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button
             onClick={() => {
               if (!name.trim()) return;
               if (freq === 'weekly' && weekdays.length === 0) return;
@@ -800,11 +774,9 @@ function EditHabitModal({ habit, onSave, onClose }) {
                 weekdays: freq === 'weekly' ? weekdays.sort().join(',') : '',
               });
             }}
-            style={{ flex: 1, background: C.accent, color: '#000', border: 'none',
-              padding: 10, borderRadius: 10, cursor: 'pointer',
-              fontSize: 13, fontWeight: 700, fontFamily: C.font }}>
+            style={{ flex: 1 }}>
             Save
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -835,7 +807,7 @@ function NewHabitModal({ onSave, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex',
       alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(0,0,0,0.75)' }}>
-      <div style={{ background: '#2C2C2E', border: `1px solid ${C.sep}`, borderRadius: 16,
+      <div style={{ background: C.card, border: `1px solid ${C.sep}`, borderRadius: C.radius + 2,
         width: '100%', maxWidth: 440, fontFamily: C.font, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px', borderBottom: `1px solid ${C.sep}` }}>
@@ -847,7 +819,7 @@ function NewHabitModal({ onSave, onClose }) {
         <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14,
           maxHeight: '65vh', overflowY: 'auto' }}>
           <div><label style={lbl}>Habit Name</label>
-            <input autoFocus style={inp} placeholder="e.g. Push-ups, Read 20 pages, Meditate"
+            <Input autoFocus placeholder="e.g. Push-ups, Read 20 pages, Meditate"
               value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && canSave && onSave({
                 name, frequency: freq, color, time_of_day: tod,
@@ -911,7 +883,7 @@ function NewHabitModal({ onSave, onClose }) {
 
           <div>
             <label style={lbl}>Numeric Target <span style={{ color: C.t3, textTransform: 'none' }}>(e.g. 20 push-ups/day)</span></label>
-            <input type="number" style={inp} placeholder="Leave blank for yes/no habit"
+            <Input type="number" placeholder="Leave blank for yes/no habit"
               value={target} onChange={e => setTarget(e.target.value)} />
           </div>
 
@@ -927,24 +899,18 @@ function NewHabitModal({ onSave, onClose }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, padding: '14px 20px',
-          borderTop: `1px solid ${C.sep}` }}>
-          <button onClick={onClose}
-            style={{ flex: 1, background: C.inputBg, border: `1px solid ${C.sep}`,
-              color: C.t1, padding: 10, borderRadius: 10, cursor: 'pointer',
-              fontSize: 13, fontFamily: C.font }}>Cancel</button>
-          <button disabled={!canSave}
+        <div style={{ display: 'flex', gap: 10, padding: '14px 20px', borderTop: `1px solid ${C.sep}` }}>
+          <Button variant="secondary" onClick={onClose} style={{ flex: 1 }}>Cancel</Button>
+          <Button
+            disabled={!canSave}
             onClick={() => canSave && onSave({
               name, frequency: freq, color, time_of_day: tod,
               target_value: target ? parseInt(target) : null,
               weekdays: freq === 'weekly' ? weekdays.sort().join(',') : '',
             })}
-            style={{ flex: 1, background: C.accent, color: '#000', border: 'none',
-              padding: 10, borderRadius: 10, cursor: canSave ? 'pointer' : 'not-allowed',
-              fontSize: 13, fontWeight: 700, fontFamily: C.font,
-              opacity: canSave ? 1 : 0.4 }}>
+            style={{ flex: 1, opacity: canSave ? 1 : 0.4 }}>
             Create Habit
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -980,6 +946,7 @@ function WeekdayBar({ weekdays: wdStr }) {
 function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onAddSubItem, onDeleteSubItem,onSubItemMenuOpen, }) {
   const [subOpen, setSubOpen] = useState(false);
   const [addingSubItem, setAddingSubItem] = useState(false);
+  const [hov, setHov] = useState(false);
   const accentColor = COLOR_MAP[habit.color] || C.accent;
   const rate = habit.completion_rate_today || 0;
   const hasSubItems = (habit.sub_items || []).length > 0;
@@ -1080,9 +1047,17 @@ function HabitCard({ habit, viewMode, onToggle, onToggleSubItem, onMenuOpen, onA
 
   // ── Card view ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: C.card,
-      border: `1px solid ${habit.completed_today ? accentColor + '50' : C.sep}`,
-      borderRadius: 14, overflow: 'hidden', marginBottom: 8, transition: 'border-color 0.2s' }}>
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        background: C.card,
+        border: `1px solid ${habit.completed_today ? accentColor + '50' : hov ? 'rgba(255,255,255,0.12)' : C.sep}`,
+        borderRadius: 14, overflow: 'hidden', marginBottom: 8,
+        transition: 'border-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease',
+        transform: hov && !habit.completed_today ? 'translateY(-2px)' : 'none',
+        boxShadow: hov && !habit.completed_today ? '0 8px 24px rgba(0,0,0,0.25)' : 'none',
+      }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
         {/* Circle LEFT */}
         <CompletionCircle rate={rate} color={accentColor} size={38}
@@ -2385,12 +2360,7 @@ export default function Habits() {
                   color: C.t2, display: 'flex', alignItems: 'center' }}>
                 ⋮
               </button>
-              <button onClick={() => setShowNewHabit(true)}
-                style={{ background: C.accent, color: '#000', border: 'none',
-                  borderRadius: 10, padding: '9px 18px', fontSize: 13,
-                  fontWeight: 700, cursor: 'pointer', fontFamily: C.font }}>
-                + New Habit
-              </button>
+              <Button onClick={() => setShowNewHabit(true)}>+ New Habit</Button>
             </div>
           </div>
 

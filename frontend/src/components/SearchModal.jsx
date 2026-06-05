@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-
-const C = {
-  bg: '#1C1C1E', sep: 'rgba(84,84,88,0.55)', inputBg: 'rgba(255,255,255,0.08)',
-  accent: '#FFD60A', t1: '#FFFFFF', t2: 'rgba(235,235,245,0.6)', t3: 'rgba(235,235,245,0.28)',
-  font: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', system-ui, sans-serif",
-};
+import C from '../theme';
 
 export default function SearchModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
