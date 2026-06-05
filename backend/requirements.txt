@@ -164,3 +164,5 @@ urllib3==2.7.0
     # via requests
 websockets==16.0
     # via google-genai
+drf-spectacular==0.28.0
+drf-spectacular-sidecar==2025.6.1
