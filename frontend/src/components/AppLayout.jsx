@@ -113,13 +113,20 @@ export default function AppLayout({ children }) {
           overflow: 'visible',  // ← allow buttons to expand outside
         }}
         >
-        {/* App logo / brain icon at top */}
-        <div style={{
+        {/* Brain logo — click goes to dashboard home */}
+        <div
+          onClick={() => navigate('/')}
+          title="Dashboard"
+          style={{
             fontSize: 22, marginBottom: C.space.xl,
             width: '100%', display: 'flex', alignItems: 'center',
-            justifyContent: 'center',
-        }}>
-            🧠
+            justifyContent: 'center', cursor: 'pointer',
+            transition: 'transform 0.15s ease',
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          🧠
         </div>
 
         <SidebarButton 

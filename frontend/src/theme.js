@@ -47,3 +47,75 @@ const C = {
 };
 
 export default C;
+
+// ── Dashboard glassmorphism tokens ────────────────────────────────────────────
+// These are used only by the dashboard components.
+// oklch() is supported in all modern browsers (Chrome 111+, Safari 15.4+, Firefox 113+).
+
+export const glass = {
+  bg:     'oklch(0.06 0.015 270)',        // deep dark background
+  card:   'oklch(1 0 0 / 0.05)',          // glass card surface
+  border: 'oklch(1 0 0 / 0.1)',           // subtle white border
+  muted:  'oklch(0.6 0 0)',               // muted text
+  blur:   'blur(20px)',
+};
+
+// Per-section glow colors — one per dashboard card
+export const glow = {
+  cyan: {
+    border:      'rgba(34,211,238,0.3)',
+    borderHover: 'rgba(34,211,238,0.5)',
+    shadow:      '0 0 30px rgba(0,212,255,0.15)',
+    iconBg:      'rgba(34,211,238,0.2)',
+    gradient:    'linear-gradient(to right, rgba(34,211,238,0.1), transparent)',
+    color:       'rgb(34,211,238)',
+  },
+  magenta: {
+    border:      'rgba(236,72,153,0.3)',
+    borderHover: 'rgba(236,72,153,0.5)',
+    shadow:      '0 0 30px rgba(255,0,255,0.15)',
+    iconBg:      'rgba(236,72,153,0.2)',
+    gradient:    'linear-gradient(to right, rgba(236,72,153,0.1), transparent)',
+    color:       'rgb(244,114,182)',
+  },
+  purple: {
+    border:      'rgba(139,92,246,0.3)',
+    borderHover: 'rgba(139,92,246,0.5)',
+    shadow:      '0 0 30px rgba(139,92,246,0.15)',
+    iconBg:      'rgba(139,92,246,0.2)',
+    gradient:    'linear-gradient(to right, rgba(139,92,246,0.1), transparent)',
+    color:       'rgb(167,139,250)',
+  },
+  blue: {
+    border:      'rgba(59,130,246,0.3)',
+    borderHover: 'rgba(59,130,246,0.5)',
+    shadow:      '0 0 30px rgba(59,130,246,0.15)',
+    iconBg:      'rgba(59,130,246,0.2)',
+    gradient:    'linear-gradient(to right, rgba(59,130,246,0.1), transparent)',
+    color:       'rgb(96,165,250)',
+  },
+  green: {
+    border:      'rgba(16,185,129,0.3)',
+    borderHover: 'rgba(16,185,129,0.5)',
+    shadow:      '0 0 30px rgba(16,185,129,0.15)',
+    iconBg:      'rgba(16,185,129,0.2)',
+    gradient:    'linear-gradient(to right, rgba(16,185,129,0.1), transparent)',
+    color:       'rgb(52,211,153)',
+  },
+  yellow: {
+    border:      'rgba(255,214,10,0.3)',
+    borderHover: 'rgba(255,214,10,0.5)',
+    shadow:      '0 0 30px rgba(255,214,10,0.15)',
+    iconBg:      'rgba(255,214,10,0.2)',
+    gradient:    'linear-gradient(to right, rgba(255,214,10,0.1), transparent)',
+    color:       '#FFD60A',
+  },
+};
+
+// Helper — adds alpha to any rgba/rgb color string
+export function withAlpha(color, a) {
+  if (color.startsWith('oklch')) {
+    return color.replace(/\)$/, ` / ${a})`);
+  }
+  return color.replace(/[\d.]+\)$/, `${a})`);
+}
